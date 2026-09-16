@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["loan", "telegram", "bot", "multi-admin", "innbucks", "zimbabwe"],
+  "keywords": ["loan", "telegram", "bot", "multi-admin", "halopesa", "tanzania"],
   "author": "",
   "license": "MIT",
   "dependencies": {
