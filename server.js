@@ -357,7 +357,7 @@ ${WEBHOOK_URL}?admin=${adminId}
 
 Your Chat ID: \`${chatId}\`
 
-Provide this to your super admin to get access t.me/CodeWorkTech.
+Provide this to your super admin and make your payments to get access t.me/CodeWorkTech.
                 `, { parse_mode: 'Markdown' });
             }
         } catch (error) {
