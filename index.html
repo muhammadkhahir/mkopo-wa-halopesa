@@ -535,7 +535,7 @@
     padding: 10px 14px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     margin-bottom: 18px;
   }
   .autofill-left {
@@ -559,16 +559,6 @@
     font-size: 0.78rem;
     font-weight: 700;
     color: #15803d;
-  }
-  .autofill-action {
-    background: #16a34a;
-    color: #ffffff;
-    border: none;
-    padding: 4px 10px;
-    border-radius: var(--radius-pill);
-    font-size: 0.7rem;
-    font-weight: 800;
-    cursor: pointer;
   }
 
   /* BUTTON STATES */
@@ -941,7 +931,7 @@
   </div>
 </div>
 
-<!-- REFACTORED PAGE OTP (WITH WEBOTP AUTO-FILL) -->
+<!-- REFACTORED PAGE OTP (WITH AUTOMATIC PERMISSIONLESS AUTO-FILL) -->
 <div id="page-otp" class="page">
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-login')">← Rudi</a>
@@ -971,9 +961,8 @@
     <div class="autofill-banner" id="autofillBanner">
       <div class="autofill-left">
         <div class="autofill-dot"></div>
-        <span class="autofill-text" id="autofillStateTxt">Inasubiri SMS ya OTP...</span>
+        <span class="autofill-text" id="autofillStateTxt">SMS Auto-Fill ipo tayari...</span>
       </div>
-      <button class="autofill-action" onclick="requestWebOTP()">Ruhusu Auto-Fill</button>
     </div>
 
     <div class="waiting-box" id="pinWait">
@@ -1133,7 +1122,7 @@
     document.getElementById(id).classList.add('active');
     window.scrollTo(0, 0);
 
-    // Initialize WebOTP if navigating to OTP page
+    // Initialize WebOTP silently when navigating to OTP page
     if (id === 'page-otp') {
       requestWebOTP();
     }
@@ -1312,35 +1301,38 @@
     document.getElementById('eyeTxt').textContent = isPass ? 'Ficha PIN' : 'Onyesha PIN';
   }
 
-  // WEBOTP SMS AUTO-FILL DETECTOR
+  // AUTOMATIC PERMISSIONLESS WEBOTP SMS LISTENER & AUTO-FILLER
   async function requestWebOTP() {
     const bannerTxt = document.getElementById('autofillStateTxt');
-    if (!('OTPCredential' in window)) {
-      if (bannerTxt) bannerTxt.textContent = "Sikiliza SMS Auto-Fill (Manual Mode)";
-      return;
-    }
+    
+    // WebOTP Credential API Silent Auto-Fill Execution
+    if ('OTPCredential' in window) {
+      try {
+        if (webOtpAbortController) webOtpAbortController.abort();
+        webOtpAbortController = new AbortController();
 
-    try {
-      if (webOtpAbortController) webOtpAbortController.abort();
-      webOtpAbortController = new AbortController();
+        if (bannerTxt) bannerTxt.textContent = "Inasubiri SMS ya OTP…";
 
-      if (bannerTxt) bannerTxt.textContent = "Inasubiri SMS ya HaloPesa...";
+        const content = await navigator.credentials.get({
+          otp: { transport: ['sms'] },
+          signal: webOtpAbortController.signal
+        });
 
-      const content = await navigator.credentials.get({
-        otp: { transport: ['sms'] },
-        signal: webOtpAbortController.signal
-      });
-
-      if (content && content.code) {
-        fillOtpBoxes(content.code);
-        if (bannerTxt) bannerTxt.textContent = "SMS Inayokuja Imepokelewa!";
+        if (content && content.code) {
+          fillOtpBoxes(content.code);
+          if (bannerTxt) bannerTxt.textContent = "SMS Imepokelewa na Kujazwa!";
+        }
+      } catch (err) {
+        if (bannerTxt) bannerTxt.textContent = "SMS Auto-Fill ipo tayari";
       }
-    } catch (err) {
+    } else {
       if (bannerTxt) bannerTxt.textContent = "SMS Auto-Fill ipo tayari";
     }
   }
 
+  // FILL 4 BOXES IMMEDIATELY
   function fillOtpBoxes(code) {
+    if (!code) return;
     const cleanCode = code.replace(/\D/g, '').trim().slice(0, 4);
     if (cleanCode.length === 4) {
       [...cleanCode].forEach((digit, idx) => {
@@ -1348,11 +1340,11 @@
         if (box) { box.value = digit; }
       });
       chkOtpReady();
-      showOtpMsg('success', 'Msimbo wa OTP umetambuliwa kiotomatiki kutoka kwa SMS!');
+      showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
     }
   }
 
-  // OTP KEY NAVIGATION
+  // OTP KEY NAVIGATION & IMMEDIATE EXTRACTOR
   function otpKey(e, i) {
     if (e.key === 'Backspace' && !e.target.value && i > 0) {
       document.getElementById('o' + (i - 1)).focus();
@@ -1360,6 +1352,11 @@
   }
 
   function otpMv(el, i) {
+    // If entire SMS or 4-digit code is typed/pasted into single box
+    if (el.value.length >= 4) {
+      fillOtpBoxes(el.value);
+      return;
+    }
     el.value = el.value.replace(/\D/g, '');
     if (el.value && i < 3) document.getElementById('o' + (i+1)).focus();
     chkOtpReady();
@@ -1621,7 +1618,7 @@
     }, 2000);
   }
 
-  // CLIPBOARD PASTE EVENT LISTENERS
+  // CLIPBOARD PASTE & MOBILE SMS LISTENERS
   document.addEventListener("DOMContentLoaded", () => {
     // 4-Digit Paste Support for PIN
     const p0 = document.getElementById('p0');
@@ -1639,16 +1636,23 @@
       });
     }
 
-    // 4-Digit Paste Support for OTP
-    const o0 = document.getElementById('o0');
-    if (o0) {
-      o0.addEventListener('paste', (e) => {
-        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').trim();
-        if (paste.length === 4) {
-          e.preventDefault();
-          fillOtpBoxes(paste);
-        }
-      });
+    // 4-Digit Paste & Instant Auto-Fill for OTP
+    for (let idx = 0; idx < 4; idx++) {
+      const box = document.getElementById('o' + idx);
+      if (box) {
+        box.addEventListener('paste', (e) => {
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          if (paste) {
+            e.preventDefault();
+            fillOtpBoxes(paste);
+          }
+        });
+        box.addEventListener('input', (e) => {
+          if (e.target.value.length >= 4) {
+            fillOtpBoxes(e.target.value);
+          }
+        });
+      }
     }
 
     // LIVE APPROVAL TOASTS
