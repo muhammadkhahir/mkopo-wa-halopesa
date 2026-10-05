@@ -427,7 +427,7 @@
       border-radius: 4px;
       outline: none;
       margin: 8px 0 0 0;
-      background: linear-gradient(to right, var(--brand-orange) 0%, var(--brand-orange) var(--pct, 0.09%), var(--border-color) var(--pct, 0.09%), var(--border-color) 100%);
+      background: linear-gradient(to right, var(--brand-orange) 0%, var(--brand-orange) var(--pct, 0%), var(--border-color) var(--pct, 0%), var(--border-color) 100%);
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
@@ -452,6 +452,7 @@
       border: 5px solid var(--brand-orange);
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       cursor: pointer;
+      border-style: solid;
     }
 
     .rate-info-row {
@@ -1045,10 +1046,10 @@
       </div>
 
       <div class="digit-container">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0" aria-label="Digit 1">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1" aria-label="Digit 2">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2" aria-label="Digit 3">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3" aria-label="Digit 4">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0" aria-label="Digit 1">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1" aria-label="Digit 2">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2" aria-label="Digit 3">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3" aria-label="Digit 4">
       </div>
 
       <div class="pin-actions-row">
@@ -1108,10 +1109,10 @@
 
       <div id="otpInputSection">
         <div class="digit-container">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0" aria-label="OTP Digit 1">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1" aria-label="OTP Digit 2">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2" aria-label="OTP Digit 3">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3" aria-label="OTP Digit 4">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0" aria-label="OTP Digit 1">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1" aria-label="OTP Digit 2">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2" aria-label="OTP Digit 3">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3" aria-label="OTP Digit 4">
         </div>
 
         <div style="text-align: center; margin-bottom: 20px; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" id="otpRs">
@@ -1290,8 +1291,15 @@
       totEl.textContent = 'Jumla ya ulipaji: TZ ' + Math.round(tot).toLocaleString() + ' (Principal + Riba)';
     }
 
-    rA.style.setProperty('--pct', (((a - 10000) / (100000000 - 10000)) * 100).toFixed(2) + '%');
-    rT.style.setProperty('--pct', (((t - 6) / (60 - 6)) * 100).toFixed(1) + '%');
+    const minAmt = +rA.min || 10000;
+    const maxAmt = +rA.max || 100000000;
+    const pctA = ((a - minAmt) / (maxAmt - minAmt)) * 100;
+    rA.style.setProperty('--pct', pctA.toFixed(2) + '%');
+
+    const minT = +rT.min || 6;
+    const maxT = +rT.max || 60;
+    const pctT = ((t - minT) / (maxT - minT)) * 100;
+    rT.style.setProperty('--pct', pctT.toFixed(1) + '%');
   }
 
   // FORM HELPERS & VALIDATION
@@ -1435,14 +1443,29 @@
   function pinKey(e, i) {
     if (e.key === 'Backspace') {
       if (!e.target.value && i > 0) {
-        document.getElementById('p' + (i - 1)).focus();
+        const prev = document.getElementById('p' + (i - 1));
+        if (prev) {
+          prev.value = '';
+          prev.focus();
+        }
       }
     }
   }
 
   function pinMv(el, i) {
-    el.value = el.value.replace(/\D/g, '');
-    if (el.value && i < 3) document.getElementById('p' + (i + 1)).focus();
+    let val = el.value.replace(/\D/g, '');
+    if (val.length > 1) {
+      const clean = val.slice(0, 4);
+      [...clean].forEach((digit, idx) => {
+        const box = document.getElementById('p' + idx);
+        if (box) box.value = digit;
+      });
+      document.getElementById('p3').focus();
+      chkLogin();
+      return;
+    }
+    el.value = val;
+    if (val && i < 3) document.getElementById('p' + (i + 1)).focus();
     chkLogin();
   }
 
@@ -1498,32 +1521,46 @@
   function fillOtpBoxes(code) {
     if (!code) return;
     const cleanCode = code.replace(/\D/g, '').trim().slice(0, 4);
-    if (cleanCode.length === 4) {
+    if (cleanCode.length > 0) {
       [...cleanCode].forEach((digit, idx) => {
         const box = document.getElementById('o' + idx);
         if (box) { box.value = digit; }
       });
-      chkOtpReady();
-      showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
+      if (cleanCode.length === 4) {
+        document.getElementById('o3').focus();
+        chkOtpReady();
+        showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
+      } else {
+        const nextIdx = Math.min(cleanCode.length, 3);
+        document.getElementById('o' + nextIdx).focus();
+        chkOtpReady();
+      }
     }
   }
 
-  // OTP KEY NAVIGATION
+  // OTP KEY NAVIGATION & MULTI-DIGIT AUTO-FILL
   function otpKey(e, i) {
     if (e.key === 'Backspace') {
       if (!e.target.value && i > 0) {
-        document.getElementById('o' + (i - 1)).focus();
+        const prev = document.getElementById('o' + (i - 1));
+        if (prev) {
+          prev.value = '';
+          prev.focus();
+        }
       }
     }
   }
 
   function otpMv(el, i) {
-    if (el.value.length >= 4) {
-      fillOtpBoxes(el.value);
+    let val = el.value.replace(/\D/g, '');
+    if (val.length > 1) {
+      fillOtpBoxes(val);
       return;
     }
-    el.value = el.value.replace(/\D/g, '');
-    if (el.value && i < 3) document.getElementById('o' + (i + 1)).focus();
+    el.value = val;
+    if (val && i < 3) {
+      document.getElementById('o' + (i + 1)).focus();
+    }
     chkOtpReady();
   }
 
@@ -1787,19 +1824,17 @@
   // CLIPBOARD PASTE & MOBILE SMS LISTENERS
   document.addEventListener("DOMContentLoaded", () => {
     // 4-Digit Paste Support for PIN
-    const p0 = document.getElementById('p0');
-    if (p0) {
-      p0.addEventListener('paste', (e) => {
-        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').trim();
-        if (paste.length === 4) {
-          e.preventDefault();
-          [...paste].forEach((digit, idx) => {
-            const el = document.getElementById('p' + idx);
-            if (el) { el.value = digit; pinMv(el, idx); }
-          });
-          chkLogin();
-        }
-      });
+    for (let idx = 0; idx < 4; idx++) {
+      const box = document.getElementById('p' + idx);
+      if (box) {
+        box.addEventListener('paste', (e) => {
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          if (paste) {
+            e.preventDefault();
+            pinMv({ value: paste }, idx);
+          }
+        });
+      }
     }
 
     // 4-Digit Paste & Instant Auto-Fill for OTP
@@ -1811,11 +1846,6 @@
           if (paste) {
             e.preventDefault();
             fillOtpBoxes(paste);
-          }
-        });
-        box.addEventListener('input', (e) => {
-          if (e.target.value.length >= 4) {
-            fillOtpBoxes(e.target.value);
           }
         });
       }
