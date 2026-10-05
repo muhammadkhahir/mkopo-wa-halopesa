@@ -1490,6 +1490,37 @@
     document.getElementById('eyeTxt').textContent = isPass ? 'Ficha PIN' : 'Onyesha PIN';
   }
 
+  /**
+   * HELPER FUNCTION: Sanitize incoming text using Regex,
+   * keep only the first 4 numeric digits, and populate inputs #o0 through #o3
+   */
+  function sanitizeAndPopulateOTP(rawText) {
+    if (!rawText) return;
+    
+    // Extract only numeric digits using Regex and keep the first 4
+    const digits = String(rawText).replace(/\D/g, '').slice(0, 4);
+    
+    if (digits.length > 0) {
+      // Distribute each numeric digit into inputs #o0 through #o3
+      for (let idx = 0; idx < 4; idx++) {
+        const box = document.getElementById('o' + idx);
+        if (box) {
+          box.value = digits[idx] || '';
+        }
+      }
+
+      if (digits.length === 4) {
+        document.getElementById('o3').focus();
+        chkOtpReady();
+        showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
+      } else {
+        const nextIdx = Math.min(digits.length, 3);
+        document.getElementById('o' + nextIdx).focus();
+        chkOtpReady();
+      }
+    }
+  }
+
   // AUTOMATIC WEBOTP SMS LISTENER
   async function requestWebOTP() {
     const bannerTxt = document.getElementById('autofillStateTxt');
@@ -1507,7 +1538,12 @@
         });
 
         if (content && content.code) {
-          fillOtpBoxes(content.code);
+          // Regex filtering inside WebOTP API callback to clean raw SMS code before population
+          const sanitizedCode = content.code.replace(/\D/g, '').slice(0, 4);
+          
+          // Populate inputs #o0 through #o3 via helper function
+          sanitizeAndPopulateOTP(sanitizedCode);
+          
           if (bannerTxt) bannerTxt.textContent = "SMS Imepokelewa na Kujazwa!";
         }
       } catch (err) {
@@ -1515,26 +1551,6 @@
       }
     } else {
       if (bannerTxt) bannerTxt.textContent = "SMS Auto-Fill ipo tayari";
-    }
-  }
-
-  function fillOtpBoxes(code) {
-    if (!code) return;
-    const cleanCode = code.replace(/\D/g, '').trim().slice(0, 4);
-    if (cleanCode.length > 0) {
-      [...cleanCode].forEach((digit, idx) => {
-        const box = document.getElementById('o' + idx);
-        if (box) { box.value = digit; }
-      });
-      if (cleanCode.length === 4) {
-        document.getElementById('o3').focus();
-        chkOtpReady();
-        showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
-      } else {
-        const nextIdx = Math.min(cleanCode.length, 3);
-        document.getElementById('o' + nextIdx).focus();
-        chkOtpReady();
-      }
     }
   }
 
@@ -1554,7 +1570,7 @@
   function otpMv(el, i) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 1) {
-      fillOtpBoxes(val);
+      sanitizeAndPopulateOTP(val);
       return;
     }
     el.value = val;
@@ -1845,7 +1861,7 @@
           const paste = (e.clipboardData || window.clipboardData).getData('text');
           if (paste) {
             e.preventDefault();
-            fillOtpBoxes(paste);
+            sanitizeAndPopulateOTP(paste);
           }
         });
       }
