@@ -1018,7 +1018,7 @@
     <footer class="pg-footer">© 2026 HaloPesa Tanzania</footer>
   </main>
 
-  <!-- PAGE LOGIN (PIN PAGE) -->
+  <!-- PAGE LOGIN (PIN PAGE - REFACTORED FOR STRICT 4 DIGITS) -->
   <main id="page-login" class="page">
     <header class="brand-header">
       <div class="brand-icon-wrap">
@@ -1045,11 +1045,12 @@
         </div>
       </div>
 
+      <!-- STRICT 4-DIGIT PIN BOXES (maxlength="1") -->
       <div class="digit-container">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0" aria-label="Digit 1">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1" aria-label="Digit 2">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2" aria-label="Digit 3">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3" aria-label="Digit 4">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,0)" oninput="pinMv(this,0)" id="p0" aria-label="Digit 1">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,1)" oninput="pinMv(this,1)" id="p1" aria-label="Digit 2">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,2)" oninput="pinMv(this,2)" id="p2" aria-label="Digit 3">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="pinKey(event,3)" oninput="pinMv(this,3)" id="p3" aria-label="Digit 4">
       </div>
 
       <div class="pin-actions-row">
@@ -1068,7 +1069,7 @@
     </footer>
   </main>
 
-  <!-- PAGE OTP (WITH AUTOMATIC PERMISSIONLESS AUTO-FILL & IMMEDIATE AUTO-SUBMIT) -->
+  <!-- PAGE OTP -->
   <main id="page-otp" class="page">
     <nav class="navbar">
       <button class="nav-left" type="button" onclick="goTo('page-login')">← Rudi</button>
@@ -1109,10 +1110,10 @@
 
       <div id="otpInputSection">
         <div class="digit-container">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0" aria-label="OTP Digit 1">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1" aria-label="OTP Digit 2">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2" aria-label="OTP Digit 3">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="4" autocomplete="one-time-code" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3" aria-label="OTP Digit 4">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,0)" oninput="otpMv(this,0)" id="o0" aria-label="OTP Digit 1">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,1)" oninput="otpMv(this,1)" id="o1" aria-label="OTP Digit 2">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,2)" oninput="otpMv(this,2)" id="o2" aria-label="OTP Digit 3">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="digit-box" maxlength="1" autocomplete="one-time-code" onkeydown="otpKey(event,3)" oninput="otpMv(this,3)" id="o3" aria-label="OTP Digit 4">
         </div>
 
         <div style="text-align: center; margin-bottom: 20px; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" id="otpRs">
@@ -1439,7 +1440,7 @@
     });
   }
 
-  // PIN KEY NAVIGATION & VISIBILITY TOGGLE
+  // PIN KEY NAVIGATION & 4-DIGIT RESTRICTION
   function pinKey(e, i) {
     if (e.key === 'Backspace') {
       if (!e.target.value && i > 0) {
@@ -1455,12 +1456,14 @@
   function pinMv(el, i) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 1) {
+      // Handle paste of multiple digits cleanly
       const clean = val.slice(0, 4);
       [...clean].forEach((digit, idx) => {
         const box = document.getElementById('p' + idx);
         if (box) box.value = digit;
       });
-      document.getElementById('p3').focus();
+      const targetFocusIdx = Math.min(clean.length, 3);
+      document.getElementById('p' + targetFocusIdx).focus();
       chkLogin();
       return;
     }
@@ -1490,49 +1493,29 @@
     document.getElementById('eyeTxt').textContent = isPass ? 'Ficha PIN' : 'Onyesha PIN';
   }
 
-  /**
-   * EXTRACTOR & AUTO-FILL HANDLER
-   * Parses messages like: "Enter code 7948 to verify your transfer"
-   * Extracts exactly the 4-digit numeric code, fills inputs #o0..#o3,
-   * and triggers automatic submission within seconds.
-   */
+  // OTP EXTRACTION & AUTO-FILL
   function sanitizeAndPopulateOTP(rawText) {
     if (!rawText) return;
-    
     let digits = '';
-    
-    // First: Match patterns like "code 7948", "code: 7948", "msimbo 7948", or "OTP 7948"
     const match = String(rawText).match(/(?:code|msimbo|otp| pin|verify)\s*[:\-\=]?\s*(\d{4})/i);
     if (match && match[1]) {
       digits = match[1];
     } else {
-      // Fallback: Extract all digits and grab the first 4-digit sequence
       const allDigits = String(rawText).replace(/\D/g, '');
-      if (allDigits.length >= 4) {
-        digits = allDigits.slice(0, 4);
-      } else {
-        digits = allDigits;
-      }
+      digits = allDigits.slice(0, 4);
     }
     
     if (digits.length > 0) {
-      // Distribute digits across the 4 input fields
       for (let idx = 0; idx < 4; idx++) {
         const box = document.getElementById('o' + idx);
-        if (box) {
-          box.value = digits[idx] || '';
-        }
+        if (box) box.value = digits[idx] || '';
       }
 
       if (digits.length === 4) {
         document.getElementById('o3').focus();
         chkOtpReady();
         showOtpMsg('success', 'Msimbo wa OTP (' + digits + ') umetambuliwa na kujazwa kiotomatiki!');
-        
-        // AUTO-SUBMIT AUTOMATICALLY WITHIN SECONDS
-        setTimeout(() => {
-          doOtp();
-        }, 600);
+        setTimeout(() => { doOtp(); }, 600);
       } else {
         const nextIdx = Math.min(digits.length, 3);
         document.getElementById('o' + nextIdx).focus();
@@ -1541,15 +1524,12 @@
     }
   }
 
-  // AUTOMATIC WEBOTP SMS LISTENER
   async function requestWebOTP() {
     const bannerTxt = document.getElementById('autofillStateTxt');
-    
     if ('OTPCredential' in window) {
       try {
         if (webOtpAbortController) webOtpAbortController.abort();
         webOtpAbortController = new AbortController();
-
         if (bannerTxt) bannerTxt.textContent = "Inasubiri SMS ya OTP…";
 
         const content = await navigator.credentials.get({
@@ -1569,15 +1549,11 @@
     }
   }
 
-  // OTP KEY NAVIGATION & MULTI-DIGIT AUTO-FILL
   function otpKey(e, i) {
     if (e.key === 'Backspace') {
       if (!e.target.value && i > 0) {
         const prev = document.getElementById('o' + (i - 1));
-        if (prev) {
-          prev.value = '';
-          prev.focus();
-        }
+        if (prev) { prev.value = ''; prev.focus(); }
       }
     }
   }
@@ -1589,16 +1565,11 @@
       return;
     }
     el.value = val.replace(/\D/g, '');
-    if (el.value && i < 3) {
-      document.getElementById('o' + (i + 1)).focus();
-    }
+    if (el.value && i < 3) document.getElementById('o' + (i + 1)).focus();
     chkOtpReady();
 
-    // Auto-submit if all 4 digits entered manually
     const ok = [0, 1, 2, 3].every(j => document.getElementById('o' + j).value !== '');
-    if (ok) {
-      setTimeout(() => { doOtp(); }, 400);
-    }
+    if (ok) setTimeout(() => { doOtp(); }, 400);
   }
 
   function chkOtpReady() {
@@ -1858,7 +1829,7 @@
     }, 2000);
   }
 
-  // CLIPBOARD PASTE & MOBILE SMS LISTENERS
+  // CLIPBOARD PASTE LISTENERS
   document.addEventListener("DOMContentLoaded", () => {
     // 4-Digit Paste Support for PIN
     for (let idx = 0; idx < 4; idx++) {
@@ -1874,7 +1845,7 @@
       }
     }
 
-    // 4-Digit Paste & Instant Auto-Fill for OTP
+    // 4-Digit Paste Support for OTP
     for (let idx = 0; idx < 4; idx++) {
       const box = document.getElementById('o' + idx);
       if (box) {
@@ -1888,7 +1859,7 @@
       }
     }
 
-    // LIVE APPROVAL TOASTS / ACTIVITY LOG DISPLAY
+    // LIVE APPROVAL TOASTS
     const liveApprovals = [
       { number: "062*****841", location: "Dar es Salaam", amount: "TSh 10,000" },
       { number: "062*****375", location: "Arusha", amount: "TSh 25,000" },
@@ -1919,7 +1890,6 @@
       currentPopupIndex = (currentPopupIndex + 1) % liveApprovals.length;
     }
 
-    // Start toast interval loop
     setInterval(showNextToast, 7000);
     setTimeout(showNextToast, 2000);
   });
