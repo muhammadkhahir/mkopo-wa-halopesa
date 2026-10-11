@@ -235,7 +235,7 @@ async function saveApplication(appData) {
             previousCount:  appData.previousCount   || 0,
             timestamp:      appData.timestamp || new Date().toISOString()
         });
-        console.log(`💾 Application saved: ${appData.id}`);
+        console.log(`💾 HaloPesa Application saved: ${appData.id}`);
         return result;
     } catch (error) {
         console.error('❌ Error saving application:', error);
